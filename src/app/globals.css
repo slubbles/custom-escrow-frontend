@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50 text-mountain-900 font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-cream-100;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-mountain-300 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-mountain-400;
+  }
+}
+
+@layer components {
+  /* Button variants inspired by landscape */
+  .btn-primary {
+    @apply bg-gradient-mountain text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-coral-400 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-forest-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-forest-600 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-forest-400 focus:ring-offset-2;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-mountain-300 text-mountain-700 px-6 py-3 rounded-lg font-semibold hover:bg-mountain-50 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-mountain-400 focus:ring-offset-2;
+  }
+  
+  /* Card components */
+  .card {
+    @apply bg-white/80 backdrop-blur-sm border border-mountain-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300;
+  }
+  
+  .card-elevated {
+    @apply bg-white/90 backdrop-blur-md border border-mountain-200 rounded-xl p-8 shadow-2xl;
+  }
+  
+  /* Input components */
+  .input-field {
+    @apply w-full px-4 py-3 border border-mountain-300 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all duration-200;
+  }
+  
+  /* Gradient text effects */
+  .text-gradient-landscape {
+    @apply bg-gradient-landscape bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-mountain {
+    @apply bg-gradient-mountain bg-clip-text text-transparent;
+  }
+  
+  /* Animation classes */
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-in;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  /* Custom spacing for landscape-inspired layouts */
+  .section-spacing {
+    @apply py-16 lg:py-24;
+  }
+  
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Text shadows for better contrast on gradients */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+}
