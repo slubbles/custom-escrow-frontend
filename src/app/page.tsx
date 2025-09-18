@@ -1,207 +1,285 @@
-import Image from 'next/image'
-import Link from 'next/link'
-import { Navigation } from '@/components/Navigation'
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import { Navigation } from '@/components/Navigation';
+import { useBuyTokens, useActiveSales } from '@/hooks/useEscrow';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { Shield, Calculator, CheckCircle, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export default function HomePage() {
+  const { publicKey, connected } = useWallet();
+  const buyTokensMutation = useBuyTokens();
+  const { data: activeSales, isLoading: salesLoading, error: salesError } = useActiveSales();
+  const [purchaseAmount, setPurchaseAmount] = useState('');
+
+  // Get the first active sale (SNRB sale)
+  const saleData = activeSales?.[0];
+  
+  if (salesLoading) {
+    return (
+      <main className="min-h-screen">
+        <Navigation />
+        <section className="min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
+          <div className="text-center">
+            <Loader className="w-16 h-16 text-mountain-600 mx-auto mb-4 animate-spin" />
+            <p className="text-xl text-mountain-600">Loading token sale...</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // If there's an error or no sales data, show a message about initialization
+  if (salesError || !saleData) {
+    return (
+      <main className="min-h-screen">
+        <Navigation />
+        <section className="min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
+          <div className="text-center max-w-md mx-auto">
+            <div className="w-24 h-24 bg-gradient-landscape rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <span className="text-white font-bold text-4xl">S</span>
+            </div>
+            <h1 className="text-4xl font-bold text-mountain-900 mb-4">Contract Setup Required</h1>
+            <p className="text-xl text-mountain-600 mb-8">
+              The smart contract needs to be initialized and a token sale created before users can purchase tokens.
+            </p>
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 text-left">
+              <h3 className="font-semibold text-mountain-900 mb-3">Next Steps:</h3>
+              <ol className="text-mountain-700 space-y-2">
+                <li>1. Connect your admin wallet</li>
+                <li>2. Go to the <a href="/admin" className="text-forest-600 hover:underline">Admin Panel</a></li>
+                <li>3. Initialize the smart contract</li>
+                <li>4. Create a new token sale</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // Convert blockchain data to display format
+  const tokenSymbol = 'SNRB';
+  const pricePerToken = saleData.account.pricePerToken.toNumber() / 1e9; // Convert from lamports to SOL
+  const totalTokens = saleData.account.totalTokens.toNumber() / 1e9; // Convert from smallest unit
+  const tokensAvailable = saleData.account.tokensAvailable.toNumber() / 1e9;
+  const maxTokensPerBuyer = saleData.account.maxTokensPerBuyer?.toNumber() / 1e9;
+  const saleEndTime = saleData.account.saleEndTime.toNumber() * 1000; // Convert to milliseconds
+  
+  const progress = ((totalTokens - tokensAvailable) / totalTokens) * 100;
+  const timeRemaining = saleEndTime - Date.now();
+  const daysRemaining = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+  const tokensRaised = totalTokens - tokensAvailable;
+  const totalRaised = tokensRaised * pricePerToken;
+
+  const calculatePurchaseCost = () => {
+    const amount = parseFloat(purchaseAmount) || 0;
+    const grossCost = amount * pricePerToken;
+    const totalCost = grossCost;
+
+    return {
+      tokenAmount: amount,
+      grossCost,
+      totalCost,
+      isValid: amount > 0 && amount <= tokensAvailable && (!maxTokensPerBuyer || amount <= maxTokensPerBuyer)
+    };
+  };  const purchaseCalculation = calculatePurchaseCost();
+
+  const handlePurchase = async () => {
+    if (!connected || !publicKey) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    if (!purchaseCalculation.isValid) {
+      toast.error('Invalid purchase amount');
+      return;
+    }
+
+    try {
+      await buyTokensMutation.mutateAsync({
+        tokenSalePDA: saleData.publicKey,
+        tokenAmount: purchaseCalculation.tokenAmount,
+        saleData: saleData.account,
+      });
+
+      setPurchaseAmount('');
+    } catch (error) {
+      console.error('Purchase failed:', error);
+    }
+  };
+
   return (
     <main className="min-h-screen">
-      {/* Navigation */}
       <Navigation />
-
-      {/* Hero Section */}
-      <section className="section-spacing">
-        <div className="max-w-7xl mx-auto container-padding">
+      
+      <section className="min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
+        <div className="max-w-5xl mx-auto container-padding">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-slide-up">
-              <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-6">
-                <span className="text-gradient-landscape">Snarbles</span>
-                <br />
-                <span className="text-mountain-900">$SNRB Token Sale</span>
+            
+            <div className="text-center lg:text-left">
+              <div className="w-24 h-24 bg-gradient-landscape rounded-2xl flex items-center justify-center mx-auto lg:mx-0 mb-6">
+                <span className="text-white font-bold text-4xl">S</span>
+              </div>
+              
+              <h1 className="text-5xl lg:text-6xl font-bold text-mountain-900 mb-4">
+                Buy ${tokenSymbol}
               </h1>
-              <p className="text-xl text-mountain-600 mb-8 leading-relaxed">
-                Join the Snarbles ecosystem and unlock exclusive NFT creation tools across Solana and Algorand networks. 
-                Get your $SNRB tokens and be part of the next generation of no-code blockchain tools.
+
+              <p className="text-2xl text-mountain-600 mb-8">
+                ${pricePerToken} SOL per token
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/sale/snrb" className="btn-primary text-center">
-                  Buy $SNRB Tokens
-                </Link>
-                <a 
-                  href="https://snarbles.xyz" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="btn-secondary text-center"
-                >
-                  Visit Snarbles.xyz
-                </a>
-              </div>
-            </div>
-            
-            <div className="relative">
-              {/* Mountain-inspired geometric design */}
-              <div className="relative h-96 lg:h-[500px] animate-float">
-                <div className="absolute inset-0 bg-gradient-sky rounded-3xl transform -rotate-3 shadow-2xl"></div>
-                <div className="absolute inset-4 bg-gradient-mountain rounded-3xl transform rotate-2 shadow-xl"></div>
-                <div className="absolute inset-8 bg-gradient-to-br from-golden-400 to-forest-500 rounded-3xl transform -rotate-1 shadow-lg flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl font-bold mb-4">�</div>
-                    <div className="text-2xl font-semibold">$SNRB</div>
-                    <div className="text-lg">Snarbles Token</div>
+
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
+                  <div className="text-3xl font-bold text-forest-600">
+                    {totalRaised.toFixed(2)} SOL
                   </div>
+                  <div className="text-mountain-600">Raised</div>
+                </div>
+                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
+                  <div className="text-3xl font-bold text-mountain-900">
+                    {progress.toFixed(1)}%
+                  </div>
+                  <div className="text-mountain-600">Sold</div>
+                </div>
+                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
+                  <div className="text-3xl font-bold text-sky-600">
+                    {tokensRaised.toLocaleString()}
+                  </div>
+                  <div className="text-mountain-600">Tokens Sold</div>
+                </div>
+                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
+                  <div className="text-3xl font-bold text-coral-600">
+                    {daysRemaining}d
+                  </div>
+                  <div className="text-mountain-600">Left</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between text-mountain-600">
+                  <span>{tokensRaised.toLocaleString()} sold</span>
+                  <span>{tokensAvailable.toLocaleString()} remaining</span>
+                </div>
+                <div className="w-full bg-mountain-200 rounded-full h-4">
+                  <div 
+                    className="bg-gradient-landscape rounded-full h-4 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="section-spacing bg-white/30 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto container-padding">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-bold text-mountain-900 mb-6">
-              Why Join Snarbles?
-            </h2>
-            <p className="text-xl text-mountain-600 max-w-3xl mx-auto">
-              $SNRB token holders unlock exclusive access to cutting-edge NFT creation tools and multi-chain capabilities.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* NFT Tools Feature */}
-            <div className="card animate-fade-in">
-              <div className="w-12 h-12 bg-coral-500 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-white text-2xl">🎨</span>
-              </div>
-              <h3 className="text-2xl font-bold text-mountain-900 mb-4">NFT Creation Tools</h3>
-              <p className="text-mountain-600 leading-relaxed">
-                Access our no-code NFT creation platform across multiple blockchain networks with exclusive $SNRB holder benefits.
-              </p>
-            </div>
-            
-            {/* Multi-chain Feature */}
-            <div className="card animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="w-12 h-12 bg-sky-500 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-white text-2xl">🌐</span>
-              </div>
-              <h3 className="text-2xl font-bold text-mountain-900 mb-4">Multi-Chain Support</h3>
-              <p className="text-mountain-600 leading-relaxed">
-                Deploy on Solana Devnet and Algorand Mainnet with upcoming expansion to additional blockchain networks.
-              </p>
-            </div>
-            
-            {/* Ecosystem Access */}
-            <div className="card animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <div className="w-12 h-12 bg-forest-500 rounded-lg flex items-center justify-center mb-6">
-                <span className="text-white text-2xl">�</span>
-              </div>
-              <h3 className="text-2xl font-bold text-mountain-900 mb-4">Exclusive Access</h3>
-              <p className="text-mountain-600 leading-relaxed">
-                $SNRB holders get early access to new features, reduced fees, and premium tools in the Snarbles ecosystem.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="section-spacing">
-        <div className="max-w-7xl mx-auto container-padding">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gradient-mountain mb-2">2</div>
-              <div className="text-mountain-600">Blockchain Networks</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gradient-landscape mb-2">No-Code</div>
-              <div className="text-mountain-600">NFT Creation</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gradient-mountain mb-2">$SNRB</div>
-              <div className="text-mountain-600">Utility Token</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gradient-landscape mb-2">24/7</div>
-              <div className="text-mountain-600">Platform Access</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="section-spacing bg-gradient-mountain">
-        <div className="max-w-7xl mx-auto container-padding text-center">
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 text-shadow-lg">
-            Join the Snarbles Ecosystem
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto text-shadow">
-            Get your $SNRB tokens now and unlock exclusive access to our growing suite of blockchain creation tools.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/sale/snrb" className="bg-white text-coral-600 px-8 py-4 rounded-lg font-semibold hover:bg-cream-50 transform transition-all duration-200 hover:scale-105">
-              Buy $SNRB Tokens
-            </Link>
-            <a 
-              href="https://snarbles.xyz" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transform transition-all duration-200 hover:scale-105"
-            >
-              Explore Snarbles.xyz
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-mountain-900 text-white">
-        <div className="max-w-7xl mx-auto container-padding py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-mountain rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">E</span>
+            <div className="card-elevated max-w-md mx-auto w-full">
+              <h2 className="text-3xl font-bold text-mountain-900 mb-8 text-center">Purchase Tokens</h2>
+              
+              {!connected ? (
+                <div className="text-center py-12">
+                  <Shield className="w-16 h-16 text-mountain-300 mx-auto mb-6" />
+                  <p className="text-mountain-600 mb-6">Connect wallet to buy tokens</p>
+                  <button className="btn-primary w-full text-lg py-4">
+                    Connect Wallet
+                  </button>
                 </div>
-                <span className="text-2xl font-bold">Escrow</span>
-              </div>
-              <p className="text-mountain-300">
-                Secure, fast, and transparent token sales on Solana.
-              </p>
+              ) : (
+                <div className="space-y-8">
+                  <div>
+                    <label className="block text-lg font-semibold text-mountain-700 mb-3">
+                      Number of Tokens
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        className="input-field pr-20 text-xl py-4"
+                        placeholder="0"
+                        value={purchaseAmount}
+                        onChange={(e) => setPurchaseAmount(e.target.value)}
+                        max={tokensAvailable}
+                      />
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-mountain-600 font-bold text-lg">
+                        {tokenSymbol}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-mountain-600">
+                      Max: {maxTokensPerBuyer?.toLocaleString()} tokens
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[1000, 5000, 10000, 25000].map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        className="btn-outline py-4 text-lg font-semibold"
+                        onClick={() => setPurchaseAmount(amount.toString())}
+                      >
+                        {amount.toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+
+                  {purchaseCalculation.tokenAmount > 0 && (
+                    <div className="p-6 bg-mountain-50 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Calculator className="w-5 h-5 text-mountain-600" />
+                        <span className="text-mountain-600 font-semibold">Cost Breakdown</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-mountain-600">Tokens:</span>
+                          <span className="font-semibold">{purchaseCalculation.tokenAmount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-mountain-600">Price:</span>
+                          <span className="font-semibold">{pricePerToken} SOL</span>
+                        </div>
+                        <div className="border-t border-mountain-200 pt-2 mt-3">
+                          <div className="flex justify-between text-xl font-bold">
+                            <span>Total:</span>
+                            <span className="text-forest-600">{purchaseCalculation.totalCost.toFixed(4)} SOL</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handlePurchase}
+                    disabled={!purchaseCalculation.isValid || buyTokensMutation.isPending}
+                    className="btn-primary w-full text-xl py-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
+                  >
+                    {buyTokensMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-6 h-6" />
+                        <span>Buy Tokens</span>
+                      </>
+                    )}
+                  </button>
+
+                  {!purchaseCalculation.isValid && purchaseCalculation.tokenAmount > 0 && (
+                    <div className="text-center text-coral-600 font-semibold">
+                      {purchaseCalculation.tokenAmount > tokensAvailable
+                        ? 'Amount exceeds available tokens'
+                        : maxTokensPerBuyer && purchaseCalculation.tokenAmount > maxTokensPerBuyer
+                        ? 'Amount exceeds maximum per buyer'
+                        : 'Invalid amount'
+                      }
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Platform</h4>
-              <ul className="space-y-2 text-mountain-300">
-                <li><Link href="/marketplace" className="hover:text-white transition-colors">Marketplace</Link></li>
-                <li><Link href="/create" className="hover:text-white transition-colors">Create Sale</Link></li>
-                <li><Link href="/portfolio" className="hover:text-white transition-colors">Portfolio</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
-              <ul className="space-y-2 text-mountain-300">
-                <li><Link href="/docs" className="hover:text-white transition-colors">Documentation</Link></li>
-                <li><Link href="/support" className="hover:text-white transition-colors">Support</Link></li>
-                <li><Link href="/api" className="hover:text-white transition-colors">API</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Community</h4>
-              <ul className="space-y-2 text-mountain-300">
-                <li><a href="#" className="hover:text-white transition-colors">Discord</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Twitter</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">GitHub</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-mountain-700 mt-8 pt-8 text-center text-mountain-400">
-            <p>&copy; 2025 Custom Escrow. Built with ❤️ on Solana.</p>
           </div>
         </div>
-      </footer>
+      </section>
     </main>
-  )
+  );
 }

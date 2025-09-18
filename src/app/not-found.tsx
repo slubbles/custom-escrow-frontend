@@ -22,8 +22,8 @@ export default function NotFound() {
               Page Not Found
             </h1>
             <p className="text-xl text-mountain-600 mb-8 leading-relaxed">
-              Oops! The page you're looking for seems to have wandered off into the digital wilderness. 
-              Don't worry, we'll help you find your way back.
+              Oops! The page you&apos;re looking for seems to have wandered off into the digital wilderness. 
+              Don&apos;t worry, we&apos;ll help you find your way back.
             </p>
             
             {/* Action Buttons */}

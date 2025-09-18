@@ -70,7 +70,7 @@ const getBuyerAccountPDA = (buyer: PublicKey, tokenSalePDA: PublicKey) => {
   );
 };
 
-// Mock IDL for now - in a real app, you'd import this from your Anchor project
+// IDL for the escrow smart contract
 const IDL = {
   address: "HVpfkkSxd5aiCALZ8CETUxrWBfUwWCtJSxxtUsZhFrt4",
   version: "0.1.0",
@@ -125,6 +125,14 @@ const IDL = {
         { name: "systemProgram", isMut: false, isSigner: false }
       ],
       args: []
+    },
+    {
+      name: "initializeProgram",
+      accounts: [
+        { name: "authority", isMut: true, isSigner: true },
+        { name: "systemProgram", isMut: false, isSigner: false }
+      ],
+      args: []
     }
   ],
   accounts: [
@@ -170,20 +178,30 @@ export function useEscrowProgram() {
   const { wallet, publicKey } = useWallet();
 
   const program = useMemo(() => {
-    if (!wallet || !publicKey) return null;
+    // Don't initialize if wallet not connected
+    if (!wallet || !publicKey) {
+      return null;
+    }
 
     try {
       const provider = new AnchorProvider(
         connection,
         wallet.adapter as any,
-        { commitment: 'confirmed' }
+        { 
+          commitment: 'confirmed',
+          preflightCommitment: 'confirmed'
+        }
       );
+
+      setProvider(provider);
 
       // Create actual program instance with real IDL
       const program = new Program(IDL as any, provider);
+      console.log('Program initialized successfully');
       return program;
     } catch (error) {
       console.error('Error initializing program:', error);
+      // Return null instead of throwing to prevent app crash
       return null;
     }
   }, [connection, wallet, publicKey]);
@@ -198,7 +216,10 @@ export function useActiveSales() {
   return useQuery({
     queryKey: ['activeSales'],
     queryFn: async () => {
-      if (!program) throw new Error('Program not initialized');
+      if (!program) {
+        console.log('Program not initialized, skipping sales fetch');
+        return [];
+      }
 
       try {
         // Fetch all TokenSale accounts from the program
@@ -214,33 +235,13 @@ export function useActiveSales() {
         return activeSales;
       } catch (error) {
         console.error('Error fetching active sales:', error);
-        
-        // Fallback to SNRB sale data for development
-        return [
-          {
-            publicKey: new PublicKey('11111111111111111111111111111112'),
-            account: {
-              seller: new PublicKey('HVpfkkSxd5aiCALZ8CETUxrWBfUwWCtJSxxtUsZhFrt4'),
-              tokenMint: new PublicKey('So11111111111111111111111111111111111111112'),
-              paymentMint: new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),
-              pricePerToken: new BN(10000000), // 0.01 SOL in lamports
-              totalTokens: new BN(10000000000000), // 10M tokens
-              tokensAvailable: new BN(7500000000000), // 7.5M available
-              saleStartTime: new BN(Math.floor(Date.now() / 1000) - 3600), // Started 1 hour ago
-              saleEndTime: new BN(Math.floor(Date.now() / 1000) + 2592000), // Ends in 30 days
-              maxTokensPerBuyer: new BN(100000000000), // 100K max per buyer
-              platformFeeBps: 300, // 3%
-              platformFeeRecipient: new PublicKey('9yWMwzQb47KGTPKBhCkPYDUcprDBTDQgXvTsc1VTZyPE'),
-              isActive: true,
-              isPaused: false,
-              bump: 254
-            }
-          }
-        ];
+        throw error;
       }
     },
     enabled: !!program,
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: 3,
+    retryDelay: 1000,
   });
 }
 
@@ -264,13 +265,40 @@ export function useCreateSale() {
     }) => {
       if (!program || !publicKey) throw new Error('Wallet not connected');
 
-      // For demo purposes, simulate transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockSignature = 'mock_signature_' + Date.now();
       const [tokenSalePDA] = getTokenSalePDA(publicKey, params.tokenMint);
+      const [tokenVaultPDA] = getTokenVaultPDA(tokenSalePDA);
+      
+      // Get seller's token account
+      const sellerTokenAccount = await getAssociatedTokenAddress(
+        params.tokenMint,
+        publicKey
+      );
 
-      return { signature: mockSignature, tokenSalePDA };
+      // Initialize the token sale
+      const tx = await (program.methods as any)
+        .initializeSale(
+          new BN(params.pricePerToken),
+          new BN(params.totalTokens),
+          new BN(params.saleStartTime),
+          new BN(params.saleEndTime),
+          new BN(params.maxTokensPerBuyer),
+          params.platformFeeBps,
+          params.platformFeeRecipient
+        )
+        .accounts({
+          seller: publicKey,
+          tokenSale: tokenSalePDA,
+          tokenMint: params.tokenMint,
+          paymentMint: params.paymentMint,
+          sellerTokenAccount,
+          tokenVault: tokenVaultPDA,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          rent: SYSVAR_RENT_PUBKEY,
+        })
+        .rpc();
+
+      return { signature: tx, tokenSalePDA };
     },
     onSuccess: (data) => {
       toast.success('Token sale created successfully!');
@@ -331,11 +359,7 @@ export function useBuyTokens() {
         return { signature: tx };
       } catch (error) {
         console.error('Error in buy tokens transaction:', error);
-        
-        // Fallback for development - simulate transaction
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const mockSignature = 'mock_purchase_' + Date.now();
-        return { signature: mockSignature };
+        throw error;
       }
     },
     onSuccess: (data) => {
@@ -379,5 +403,42 @@ export function useBuyerHistory() {
       }
     },
     enabled: !!program && !!publicKey,
+  });
+}
+
+// Hook to initialize the smart contract program (one-time setup)
+export function useInitializeProgram() {
+  const program = useEscrowProgram();
+  const { publicKey } = useWallet();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!program || !publicKey) throw new Error('Wallet not connected');
+
+      try {
+        // Initialize the program with the authority (admin) wallet
+        const tx = await (program.methods as any)
+          .initializeProgram()
+          .accounts({
+            authority: publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+
+        return { signature: tx };
+      } catch (error) {
+        console.error('Error initializing program:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast.success('Smart contract initialized successfully!');
+      queryClient.invalidateQueries({ queryKey: ['activeSales'] });
+    },
+    onError: (error) => {
+      console.error('Error initializing program:', error);
+      toast.error('Failed to initialize smart contract');
+    },
   });
 }

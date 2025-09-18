@@ -3,14 +3,30 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
-import { useActiveSales } from '../../hooks/useEscrow';
+import { useActiveSales, useInitializeProgram } from '../../hooks/useEscrow';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useAdminAccess } from '../../hooks/useAdminAccess';
+import { Settings, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 
 export default function AdminPage() {
   const { publicKey, connected } = useWallet();
-  const { data: sales, isLoading } = useActiveSales();
+  // Temporarily disabled to fix IDL errors
+  // const { data: sales, isLoading } = useActiveSales();
+  // const initializeProgramMutation = useInitializeProgram();
   const { isAdmin } = useAdminAccess();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Temporary placeholder data
+  const sales = null;
+  const isLoading = false;
+
+  // Check if program is initialized by looking for any sales data
+  useEffect(() => {
+    // Temporarily disabled
+    // if (sales && sales.length > 0) {
+    //   setIsInitialized(true);
+    // }
+  }, [sales]);
 
   if (!connected) {
     return (
@@ -42,7 +58,7 @@ export default function AdminPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-4">You don't have permission to access this admin panel.</p>
+            <p className="text-gray-600 mb-4">You don&apos;t have permission to access this admin panel.</p>
             <p className="text-sm text-gray-500 mb-6">Connected: {publicKey?.toString()}</p>
             <button
               onClick={() => window.location.href = '/'}
@@ -76,6 +92,63 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Smart Contract Initialization */}
+          {!isInitialized && (
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-400 rounded-2xl shadow-xl p-8 mb-8">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="w-8 h-8 text-orange-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Smart Contract Setup Required</h2>
+                      <p className="text-gray-700 mb-4">
+                        Your smart contract is deployed but needs to be initialized before users can purchase tokens.
+                        This is a one-time setup that configures the contract with your admin wallet.
+                      </p>
+                      <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 mb-6">
+                        <h3 className="font-semibold text-gray-900 mb-2">What this does:</h3>
+                        <ul className="text-sm text-gray-700 space-y-1">
+                          <li>• Sets up the smart contract authority</li>
+                          <li>• Enables token sale creation and management</li>
+                          <li>• Configures platform fee collection</li>
+                          <li>• Activates the escrow system</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 ml-6">
+                      <button
+                        onClick={() => {
+                          // Temporarily disabled
+                          console.log('Initialize button clicked - functionality disabled');
+                        }}
+                        disabled={false}
+                        className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-8 py-4 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 font-semibold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3"
+                      >
+                        <Settings className="w-6 h-6" />
+                        <span>Initialize Contract (Temporarily Disabled)</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Contract Status */}
+          {isInitialized && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-2xl shadow-xl p-6 mb-8">
+              <div className="flex items-center space-x-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Smart Contract Initialized</h2>
+                  <p className="text-gray-700">Your escrow contract is ready for token sales!</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Sales Overview */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
@@ -87,7 +160,7 @@ export default function AdminPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Active Sales</p>
-                  <p className="text-2xl font-bold text-gray-900">{sales?.length || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
                 </div>
               </div>
             </div>
@@ -129,52 +202,17 @@ export default function AdminPage() {
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
               </div>
-            ) : sales && sales.length > 0 ? (
+            ) : false ? (
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Sale ID</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Token Mint</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Price</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Available</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sales.map((sale: any, index: number) => (
-                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {sale.publicKey.toString().slice(0, 8)}...
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {sale.account.tokenMint.toString().slice(0, 8)}...
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {(sale.account.pricePerToken.toNumber() / 1e9).toFixed(4)} SOL
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {(sale.account.tokensAvailable.toNumber() / 1e9).toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            sale.account.isActive && !sale.account.isPaused
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {sale.account.isActive && !sale.account.isPaused ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <button className="text-emerald-600 hover:text-emerald-800 text-sm font-medium">
-                            View Details
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600 mb-2">Smart contract integration temporarily disabled</p>
+                  <p className="text-sm text-gray-500">Working to resolve IDL compatibility issues</p>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12">
@@ -194,19 +232,34 @@ export default function AdminPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Admin Actions</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <button className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+              <button 
+                disabled={!isInitialized}
+                className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Create Sale
               </button>
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+              <button 
+                disabled={!isInitialized}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Pause All Sales
               </button>
-              <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+              <button 
+                disabled={!isInitialized}
+                className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Emergency Stop
               </button>
               <button className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium">
                 Export Data
               </button>
             </div>
+            
+            {!isInitialized && (
+              <p className="text-sm text-gray-500 mt-4">
+                Initialize the smart contract first to enable these actions.
+              </p>
+            )}
           </div>
 
           {/* System Status */}

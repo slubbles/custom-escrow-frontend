@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: 'Snarbles - $SNRB Token Sale',
   description: 'Join the Snarbles ecosystem with $SNRB tokens. Access exclusive NFT creation tools across Solana and Algorand networks.',
   keywords: 'Snarbles, SNRB, token sale, NFT tools, Solana, Algorand, blockchain',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
