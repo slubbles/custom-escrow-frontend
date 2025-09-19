@@ -10,23 +10,33 @@ import { Settings, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 
 export default function AdminPage() {
   const { publicKey, connected } = useWallet();
-  // Temporarily disabled to fix IDL errors
-  // const { data: sales, isLoading } = useActiveSales();
-  // const initializeProgramMutation = useInitializeProgram();
+  const { data: sales, isLoading } = useActiveSales();
+  const initializeProgramMutation = useInitializeProgram();
   const { isAdmin } = useAdminAccess();
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Temporary placeholder data
-  const sales = null;
-  const isLoading = false;
-
-  // Check if program is initialized by looking for any sales data
+  // Check if program is initialized by looking for any sales data or successful verification
   useEffect(() => {
-    // Temporarily disabled
-    // if (sales && sales.length > 0) {
-    //   setIsInitialized(true);
-    // }
+    if (sales && sales.length > 0) {
+      setIsInitialized(true);
+    }
   }, [sales]);
+
+  const handleInitialize = async () => {
+    try {
+      const result = await initializeProgramMutation.mutateAsync();
+      if (result.success) {
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.error('Initialization failed:', error);
+      // Error is already handled by the mutation with toast
+    }
+  };
+
+  // Handle initialization error state
+  const initializationError = initializeProgramMutation.error;
+  const hasInitializationError = initializeProgramMutation.isError;
 
   if (!connected) {
     return (
@@ -39,8 +49,16 @@ export default function AdminPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Admin Access Required</h1>
-            <p className="text-gray-600 mb-6">Please connect your wallet to access the admin panel.</p>
-            <WalletMultiButton className="!bg-emerald-600 hover:!bg-emerald-700 !rounded-lg !px-6 !py-3 !text-sm !font-semibold !transition-all !duration-200" />
+            <p className="text-gray-600 mb-6">
+              Please connect your Solana wallet to access the admin panel. 
+              Make sure you have some SOL for transaction fees.
+            </p>
+            <div className="mb-4">
+              <WalletMultiButton className="!bg-emerald-600 hover:!bg-emerald-700 !rounded-lg !px-6 !py-3 !text-sm !font-semibold !transition-all !duration-200 !w-full" />
+            </div>
+            <p className="text-xs text-gray-500">
+              Supported wallets: Phantom, Solflare, Backpack, and more
+            </p>
           </div>
         </div>
       </div>
@@ -92,6 +110,27 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Initialization Error State */}
+          {hasInitializationError && (
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-2xl shadow-xl p-6 mb-8">
+              <div className="flex items-center space-x-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Initialization Failed</h3>
+                  <p className="text-gray-700">
+                    {initializationError?.message || 'An error occurred while verifying the smart contract.'}
+                  </p>
+                  <button
+                    onClick={() => initializeProgramMutation.reset()}
+                    className="mt-2 text-red-600 hover:text-red-800 font-medium text-sm"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Smart Contract Initialization */}
           {!isInitialized && (
             <div className="bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-400 rounded-2xl shadow-xl p-8 mb-8">
@@ -102,32 +141,43 @@ export default function AdminPage() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Smart Contract Setup Required</h2>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Smart Contract Setup</h2>
                       <p className="text-gray-700 mb-4">
-                        Your smart contract is deployed but needs to be initialized before users can purchase tokens.
-                        This is a one-time setup that configures the contract with your admin wallet.
+                        Verify your smart contract connectivity and prepare for token sales.
+                        This will test the connection to your deployed escrow contract.
                       </p>
                       <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 mb-6">
                         <h3 className="font-semibold text-gray-900 mb-2">What this does:</h3>
                         <ul className="text-sm text-gray-700 space-y-1">
-                          <li>• Sets up the smart contract authority</li>
-                          <li>• Enables token sale creation and management</li>
-                          <li>• Configures platform fee collection</li>
-                          <li>• Activates the escrow system</li>
+                          <li>• Verifies smart contract deployment on Solana</li>
+                          <li>• Tests wallet connectivity and SOL balance</li>
+                          <li>• Checks program accessibility and permissions</li>
+                          <li>• Prepares the system for token sale creation</li>
                         </ul>
                       </div>
                     </div>
                     <div className="flex-shrink-0 ml-6">
                       <button
-                        onClick={() => {
-                          // Temporarily disabled
-                          console.log('Initialize button clicked - functionality disabled');
-                        }}
-                        disabled={false}
+                        onClick={handleInitialize}
+                        disabled={initializeProgramMutation.isPending || isInitialized}
                         className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-8 py-4 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 font-semibold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3"
                       >
-                        <Settings className="w-6 h-6" />
-                        <span>Initialize Contract (Temporarily Disabled)</span>
+                        {initializeProgramMutation.isPending ? (
+                          <>
+                            <Loader className="w-6 h-6 animate-spin" />
+                            <span>Verifying...</span>
+                          </>
+                        ) : isInitialized ? (
+                          <>
+                            <CheckCircle className="w-6 h-6" />
+                            <span>Contract Verified</span>
+                          </>
+                        ) : (
+                          <>
+                            <Settings className="w-6 h-6" />
+                            <span>Verify Contract</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -139,11 +189,27 @@ export default function AdminPage() {
           {/* Contract Status */}
           {isInitialized && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-2xl shadow-xl p-6 mb-8">
-              <div className="flex items-center space-x-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Smart Contract Initialized</h2>
-                  <p className="text-gray-700">Your escrow contract is ready for token sales!</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Smart Contract Ready!</h2>
+                    <p className="text-gray-700">Your escrow contract is verified and ready for token sales.</p>
+                  </div>
+                </div>
+                <div className="flex space-x-3">
+                  <a 
+                    href="/create" 
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                  >
+                    Create Token Sale
+                  </a>
+                  <a 
+                    href="/marketplace" 
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                  >
+                    View Marketplace
+                  </a>
                 </div>
               </div>
             </div>
@@ -160,7 +226,13 @@ export default function AdminPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Active Sales</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {isLoading ? (
+                      <Loader className="w-6 h-6 animate-spin" />
+                    ) : (
+                      sales?.length || 0
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
@@ -196,23 +268,50 @@ export default function AdminPage() {
 
           {/* Sales Management */}
           <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Sales Management</h2>
-            
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Sales Management</h2>
+              {isInitialized && (
+                <a 
+                  href="/create"
+                  className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                >
+                  + Create New Sale
+                </a>
+              )}
+            </div>
+
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+              <div className="text-center py-12">
+                <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-emerald-600" />
+                <p className="text-gray-600">Loading sales data...</p>
               </div>
-            ) : false ? (
-              <div className="overflow-x-auto">
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7" />
-                    </svg>
+            ) : sales && sales.length > 0 ? (
+              <div className="space-y-4">
+                {sales.map((sale, index) => (
+                  <div key={sale.publicKey.toString()} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Token Sale #{index + 1}</h3>
+                        <p className="text-sm text-gray-500">Price: {sale.account.pricePerToken.toString()} per token</p>
+                        <p className="text-sm text-gray-500">
+                          Status: {sale.account.isActive ? 'Active' : 'Inactive'}
+                          {sale.account.isPaused && ' (Paused)'}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
+                          View
+                        </button>
+                        <button className="text-yellow-600 hover:text-yellow-800 px-3 py-1 rounded">
+                          Edit
+                        </button>
+                        <button className="text-red-600 hover:text-red-800 px-3 py-1 rounded">
+                          Pause
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-gray-600 mb-2">Smart contract integration temporarily disabled</p>
-                  <p className="text-sm text-gray-500">Working to resolve IDL compatibility issues</p>
-                </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-12">
@@ -222,12 +321,23 @@ export default function AdminPage() {
                   </svg>
                 </div>
                 <p className="text-gray-600 mb-2">No active sales found</p>
-                <p className="text-sm text-gray-500">Sales will appear here when they are created</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  {isInitialized 
+                    ? "Create your first token sale to get started" 
+                    : "Initialize the contract first to create sales"
+                  }
+                </p>
+                {isInitialized && (
+                  <a 
+                    href="/create"
+                    className="inline-block bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                  >
+                    Create First Sale
+                  </a>
+                )}
               </div>
             )}
-          </div>
-
-          {/* Admin Actions */}
+          </div>          {/* Admin Actions */}
           <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-8 mt-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Admin Actions</h2>
             

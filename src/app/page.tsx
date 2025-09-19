@@ -101,8 +101,9 @@ export default function HomePage() {
     try {
       await buyTokensMutation.mutateAsync({
         tokenSalePDA: saleData.publicKey,
+        tokenMint: saleData.account.tokenMint,
+        paymentMint: saleData.account.paymentMint,
         tokenAmount: purchaseCalculation.tokenAmount,
-        saleData: saleData.account,
       });
 
       setPurchaseAmount('');

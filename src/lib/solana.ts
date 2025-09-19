@@ -1,14 +1,23 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { Program, AnchorProvider, setProvider } from '@coral-xyz/anchor';
+import { Program, AnchorProvider, setProvider, Idl } from '@coral-xyz/anchor';
+import { PROGRAM_ID, PLATFORM_FEE_RECIPIENT } from './pdas';
+import escrowIdl from './escrow-idl.json';
 
 // Environment variables
 export const SOLANA_NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.devnet.solana.com';
-export const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || 'HVpfkkSxd5aiCALZ8CETUxrWBfUwWCtJSxxtUsZhFrt4');
-export const PLATFORM_FEE_RECIPIENT = new PublicKey(process.env.NEXT_PUBLIC_PLATFORM_FEE_RECIPIENT || '9yWMwzQb47KGTPKBhCkPYDUcprDBTDQgXvTsc1VTZyPE');
 
-// Connection instance
-export const connection = new Connection(RPC_URL, 'confirmed');
+// Connection instance with optimal settings
+export const connection = new Connection(RPC_URL, {
+  commitment: 'confirmed',
+  confirmTransactionInitialTimeout: 60000,
+});
+
+// Export IDL for use in program initialization
+export const ESCROW_IDL = escrowIdl as Idl;
+
+// Re-export important constants
+export { PROGRAM_ID, PLATFORM_FEE_RECIPIENT };
 
 // Token Sale Account Structure
 export interface TokenSale {
