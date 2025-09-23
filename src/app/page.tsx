@@ -1,286 +1,183 @@
 'use client';
 
-import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
-import { useBuyTokens, useActiveSales } from '@/hooks/useEscrow';
+import { useProjects } from '@/hooks/useEscrow';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
-import { Shield, Calculator, CheckCircle, Loader } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { Shield, Zap, Users, TrendingUp, Plus, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 export default function HomePage() {
-  const { publicKey, connected } = useWallet();
-  const buyTokensMutation = useBuyTokens();
-  const { data: activeSales, isLoading: salesLoading, error: salesError } = useActiveSales();
-  const [purchaseAmount, setPurchaseAmount] = useState('');
-
-  // Get the first active sale (SNRB sale)
-  const saleData = activeSales?.[0];
-  
-  if (salesLoading) {
-    return (
-      <main className="min-h-screen">
-        <Navigation />
-        <section className="min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
-          <div className="text-center">
-            <Loader className="w-16 h-16 text-mountain-600 mx-auto mb-4 animate-spin" />
-            <p className="text-xl text-mountain-600">Loading token sale...</p>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  // If there's an error or no sales data, show a message about initialization
-  if (salesError || !saleData) {
-    return (
-      <main className="min-h-screen">
-        <Navigation />
-        <section className="min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
-          <div className="text-center max-w-md mx-auto">
-            <div className="w-24 h-24 bg-gradient-landscape rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-4xl">S</span>
-            </div>
-            <h1 className="text-4xl font-bold text-mountain-900 mb-4">Contract Setup Required</h1>
-            <p className="text-xl text-mountain-600 mb-8">
-              The smart contract needs to be initialized and a token sale created before users can purchase tokens.
-            </p>
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 text-left">
-              <h3 className="font-semibold text-mountain-900 mb-3">Next Steps:</h3>
-              <ol className="text-mountain-700 space-y-2">
-                <li>1. Connect your admin wallet</li>
-                <li>2. Go to the <a href="/admin" className="text-forest-600 hover:underline">Admin Panel</a></li>
-                <li>3. Initialize the smart contract</li>
-                <li>4. Create a new token sale</li>
-              </ol>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  // Convert blockchain data to display format
-  const tokenSymbol = 'SNRB';
-  const pricePerToken = saleData.account.pricePerToken.toNumber() / 1e9; // Convert from lamports to SOL
-  const totalTokens = saleData.account.totalTokens.toNumber() / 1e9; // Convert from smallest unit
-  const tokensAvailable = saleData.account.tokensAvailable.toNumber() / 1e9;
-  const maxTokensPerBuyer = saleData.account.maxTokensPerBuyer?.toNumber() / 1e9;
-  const saleEndTime = saleData.account.saleEndTime.toNumber() * 1000; // Convert to milliseconds
-  
-  const progress = ((totalTokens - tokensAvailable) / totalTokens) * 100;
-  const timeRemaining = saleEndTime - Date.now();
-  const daysRemaining = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-  const tokensRaised = totalTokens - tokensAvailable;
-  const totalRaised = tokensRaised * pricePerToken;
-
-  const calculatePurchaseCost = () => {
-    const amount = parseFloat(purchaseAmount) || 0;
-    const grossCost = amount * pricePerToken;
-    const totalCost = grossCost;
-
-    return {
-      tokenAmount: amount,
-      grossCost,
-      totalCost,
-      isValid: amount > 0 && amount <= tokensAvailable && (!maxTokensPerBuyer || amount <= maxTokensPerBuyer)
-    };
-  };  const purchaseCalculation = calculatePurchaseCost();
-
-  const handlePurchase = async () => {
-    if (!connected || !publicKey) {
-      toast.error('Please connect your wallet');
-      return;
-    }
-
-    if (!purchaseCalculation.isValid) {
-      toast.error('Invalid purchase amount');
-      return;
-    }
-
-    try {
-      await buyTokensMutation.mutateAsync({
-        tokenSalePDA: saleData.publicKey,
-        tokenMint: saleData.account.tokenMint,
-        paymentMint: saleData.account.paymentMint,
-        tokenAmount: purchaseCalculation.tokenAmount,
-      });
-
-      setPurchaseAmount('');
-    } catch (error) {
-      console.error('Purchase failed:', error);
-    }
-  };
+  const { data: projects, isLoading } = useProjects();
+  const { connected } = useWallet();
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
       <Navigation />
       
-      <section className="min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
-        <div className="max-w-5xl mx-auto container-padding">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="w-20 h-20 bg-gradient-landscape rounded-full flex items-center justify-center mx-auto mb-8">
+            <Shield className="text-white w-10 h-10" />
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-bold text-mountain-900 mb-6">
+            Launch Your Token Sale
+            <span className="block text-sky-600">Without Trust Issues</span>
+          </h1>
+          
+          <p className="text-xl text-mountain-600 max-w-3xl mx-auto mb-8">
+            The secure, multi-project platform for token presales with vesting. 
+            Create tiered sales, build community, and launch successfully with built-in escrow protection.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {connected ? (
+              <Link 
+                href="/create-project"
+                className="bg-sky-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-sky-700 transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Launch Your Project
+              </Link>
+            ) : (
+              <WalletMultiButton className="!bg-sky-600 !py-4 !px-8 !rounded-lg !font-semibold hover:!bg-sky-700 !transition-all !duration-200 !shadow-lg hover:!shadow-xl" />
+            )}
             
-            <div className="text-center lg:text-left">
-              <div className="w-24 h-24 bg-gradient-landscape rounded-2xl flex items-center justify-center mx-auto lg:mx-0 mb-6">
-                <span className="text-white font-bold text-4xl">S</span>
-              </div>
-              
-              <h1 className="text-5xl lg:text-6xl font-bold text-mountain-900 mb-4">
-                Buy ${tokenSymbol}
-              </h1>
+            <Link 
+              href="/projects"
+              className="border-2 border-sky-600 text-sky-600 px-8 py-4 rounded-lg font-semibold hover:bg-sky-600 hover:text-white transition-all duration-200 inline-flex items-center"
+            >
+              <TrendingUp className="w-5 h-5 mr-2" />
+              Browse Projects
+            </Link>
+          </div>
+        </div>
+      </section>
 
-              <p className="text-2xl text-mountain-600 mb-8">
-                ${pricePerToken} SOL per token
+      {/* Features Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white/30 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-mountain-900 mb-12">
+            Why Choose Our Platform?
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-sky-100">
+              <Shield className="w-12 h-12 text-sky-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-mountain-900 mb-3">Secure Escrow</h3>
+              <p className="text-mountain-600">
+                Smart contract escrow ensures funds and tokens are safe. No trust required between buyers and sellers.
               </p>
-
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
-                  <div className="text-3xl font-bold text-forest-600">
-                    {totalRaised.toFixed(2)} SOL
-                  </div>
-                  <div className="text-mountain-600">Raised</div>
-                </div>
-                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
-                  <div className="text-3xl font-bold text-mountain-900">
-                    {progress.toFixed(1)}%
-                  </div>
-                  <div className="text-mountain-600">Sold</div>
-                </div>
-                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
-                  <div className="text-3xl font-bold text-sky-600">
-                    {tokensRaised.toLocaleString()}
-                  </div>
-                  <div className="text-mountain-600">Tokens Sold</div>
-                </div>
-                <div className="p-6 bg-white/60 backdrop-blur-sm rounded-xl">
-                  <div className="text-3xl font-bold text-coral-600">
-                    {daysRemaining}d
-                  </div>
-                  <div className="text-mountain-600">Left</div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between text-mountain-600">
-                  <span>{tokensRaised.toLocaleString()} sold</span>
-                  <span>{tokensAvailable.toLocaleString()} remaining</span>
-                </div>
-                <div className="w-full bg-mountain-200 rounded-full h-4">
-                  <div 
-                    className="bg-gradient-landscape rounded-full h-4 transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
             </div>
-
-            <div className="card-elevated max-w-md mx-auto w-full">
-              <h2 className="text-3xl font-bold text-mountain-900 mb-8 text-center">Purchase Tokens</h2>
-              
-              {!connected ? (
-                <div className="text-center py-12">
-                  <Shield className="w-16 h-16 text-mountain-300 mx-auto mb-6" />
-                  <p className="text-mountain-600 mb-6">Connect wallet to buy tokens</p>
-                  <button className="btn-primary w-full text-lg py-4">
-                    Connect Wallet
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  <div>
-                    <label className="block text-lg font-semibold text-mountain-700 mb-3">
-                      Number of Tokens
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        className="input-field pr-20 text-xl py-4"
-                        placeholder="0"
-                        value={purchaseAmount}
-                        onChange={(e) => setPurchaseAmount(e.target.value)}
-                        max={tokensAvailable}
-                      />
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-mountain-600 font-bold text-lg">
-                        {tokenSymbol}
-                      </div>
-                    </div>
-                    <div className="mt-2 text-sm text-mountain-600">
-                      Max: {maxTokensPerBuyer?.toLocaleString()} tokens
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {[1000, 5000, 10000, 25000].map((amount) => (
-                      <button
-                        key={amount}
-                        type="button"
-                        className="btn-outline py-4 text-lg font-semibold"
-                        onClick={() => setPurchaseAmount(amount.toString())}
-                      >
-                        {amount.toLocaleString()}
-                      </button>
-                    ))}
-                  </div>
-
-                  {purchaseCalculation.tokenAmount > 0 && (
-                    <div className="p-6 bg-mountain-50 rounded-lg space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Calculator className="w-5 h-5 text-mountain-600" />
-                        <span className="text-mountain-600 font-semibold">Cost Breakdown</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-mountain-600">Tokens:</span>
-                          <span className="font-semibold">{purchaseCalculation.tokenAmount.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-mountain-600">Price:</span>
-                          <span className="font-semibold">{pricePerToken} SOL</span>
-                        </div>
-                        <div className="border-t border-mountain-200 pt-2 mt-3">
-                          <div className="flex justify-between text-xl font-bold">
-                            <span>Total:</span>
-                            <span className="text-forest-600">{purchaseCalculation.totalCost.toFixed(4)} SOL</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handlePurchase}
-                    disabled={!purchaseCalculation.isValid || buyTokensMutation.isPending}
-                    className="btn-primary w-full text-xl py-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
-                  >
-                    {buyTokensMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-6 h-6" />
-                        <span>Buy Tokens</span>
-                      </>
-                    )}
-                  </button>
-
-                  {!purchaseCalculation.isValid && purchaseCalculation.tokenAmount > 0 && (
-                    <div className="text-center text-coral-600 font-semibold">
-                      {purchaseCalculation.tokenAmount > tokensAvailable
-                        ? 'Amount exceeds available tokens'
-                        : maxTokensPerBuyer && purchaseCalculation.tokenAmount > maxTokensPerBuyer
-                        ? 'Amount exceeds maximum per buyer'
-                        : 'Invalid amount'
-                      }
-                    </div>
-                  )}
-                </div>
-              )}
+            
+            <div className="text-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-golden-100">
+              <Zap className="w-12 h-12 text-golden-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-mountain-900 mb-3">Tiered Sales</h3>
+              <p className="text-mountain-600">
+                Create Seed, Private, and Public sales with different pricing and vesting schedules for maximum success.
+              </p>
+            </div>
+            
+            <div className="text-center p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-forest-100">
+              <Users className="w-12 h-12 text-forest-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-mountain-900 mb-3">Community Tools</h3>
+              <p className="text-mountain-600">
+                Built-in referral system, whitelist management, and social sharing to grow your community organically.
+              </p>
             </div>
           </div>
         </div>
       </section>
-    </main>
+
+      {/* Featured Projects */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-12">
+            <h2 className="text-3xl font-bold text-mountain-900">Featured Projects</h2>
+            <Link 
+              href="/projects"
+              className="text-sky-600 hover:text-sky-700 font-semibold inline-flex items-center"
+            >
+              View All <ExternalLink className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+          
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-cream-200 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-300 rounded-full mb-4"></div>
+                  <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded mb-4"></div>
+                  <div className="h-10 bg-gray-300 rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : projects && projects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {projects.slice(0, 3).map((project) => (
+                <div key={project.id} className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-cream-200 hover:border-sky-300 transition-all duration-200">
+                  <div className="w-12 h-12 bg-gradient-landscape rounded-full flex items-center justify-center mb-4">
+                    <span className="text-white font-bold text-xl">{project.name.charAt(0)}</span>
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold text-mountain-900 mb-2">{project.name}</h3>
+                  <p className="text-mountain-600 mb-4 line-clamp-2">{project.description}</p>
+                  
+                  <Link 
+                    href={`/project/${project.slug}`}
+                    className="w-full bg-sky-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-sky-700 transition-colors inline-block text-center"
+                  >
+                    View Project
+                  </Link>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-mountain-900 mb-2">No Projects Yet</h3>
+              <p className="text-mountain-600 mb-6">Be the first to launch a token sale on our platform!</p>
+              {connected && (
+                <Link 
+                  href="/create-project"
+                  className="bg-sky-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-sky-700 transition-colors"
+                >
+                  Create First Project
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-mountain-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-sky-400 mb-2">{projects?.length || 0}</div>
+              <div className="text-mountain-300">Active Projects</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-golden-400 mb-2">0</div>
+              <div className="text-mountain-300">Total Raised</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-forest-400 mb-2">0</div>
+              <div className="text-mountain-300">Token Holders</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-coral-400 mb-2">100%</div>
+              <div className="text-mountain-300">Success Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

@@ -1,0 +1,859 @@
+{
+  "address": "3n4Jusc6GmZXTJapNbDpr4DYKFSsZUhz2XKuJVL6Kmy5",
+  "metadata": {
+    "name": "multi_presale",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Multi-Project Token Sale Platform"
+  },
+  "instructions": [
+    {
+      "name": "initialize_platform",
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "platform",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 108, 97, 116, 102, 111, 114, 109]
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 108, 97, 116, 102, 111, 114, 109, 95, 116, 114, 101, 97, 115, 117, 114, 121]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111112"
+        }
+      ],
+      "args": [
+        {
+          "name": "platform_fee",
+          "type": "u16"
+        },
+        {
+          "name": "min_project_duration",
+          "type": "i64"
+        },
+        {
+          "name": "max_project_duration",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "create_project",
+      "discriminator": [134, 68, 7, 186, 200, 139, 86, 199],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "platform",
+          "writable": true
+        },
+        {
+          "name": "project",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 114, 111, 106, 101, 99, 116]
+              },
+              {
+                "kind": "account",
+                "path": "platform.total_projects",
+                "account": "PlatformAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "project_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 114, 111, 106, 101, 99, 116, 95, 118, 97, 117, 108, 116]
+              },
+              {
+                "kind": "account",
+                "path": "platform.total_projects",
+                "account": "PlatformAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111112"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "category",
+          "type": {
+            "defined": {
+              "name": "ProjectCategory"
+            }
+          }
+        },
+        {
+          "name": "website",
+          "type": "string"
+        },
+        {
+          "name": "target_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_sale_round",
+      "discriminator": [213, 98, 185, 72, 69, 148, 104, 151],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "project",
+          "writable": true
+        },
+        {
+          "name": "sale_round",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [115, 97, 108, 101, 95, 114, 111, 117, 110, 100]
+              },
+              {
+                "kind": "account",
+                "path": "project.id",
+                "account": "ProjectAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "round_number"
+              }
+            ]
+          }
+        },
+        {
+          "name": "project_whitelist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 114, 111, 106, 101, 99, 116, 95, 119, 104, 105, 116, 101, 108, 105, 115, 116]
+              },
+              {
+                "kind": "account",
+                "path": "project.id",
+                "account": "ProjectAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "round_number"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111112"
+        }
+      ],
+      "args": [
+        {
+          "name": "sale_type",
+          "type": {
+            "defined": {
+              "name": "SaleType"
+            }
+          }
+        },
+        {
+          "name": "round_number",
+          "type": "u64"
+        },
+        {
+          "name": "token_price",
+          "type": "u64"
+        },
+        {
+          "name": "total_tokens",
+          "type": "u64"
+        },
+        {
+          "name": "start_time",
+          "type": "i64"
+        },
+        {
+          "name": "end_time",
+          "type": "i64"
+        },
+        {
+          "name": "max_tokens_per_buyer",
+          "type": "u64"
+        },
+        {
+          "name": "whitelist_required",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "buy_tokens",
+      "discriminator": [102, 6, 61, 18, 1, 218, 235, 234],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "project"
+        },
+        {
+          "name": "sale_round",
+          "writable": true
+        },
+        {
+          "name": "round_buyer_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [114, 111, 117, 110, 100, 95, 98, 117, 121, 101, 114]
+              },
+              {
+                "kind": "account",
+                "path": "project.id",
+                "account": "ProjectAccount"
+              },
+              {
+                "kind": "account",
+                "path": "sale_round.round_number",
+                "account": "SaleRound"
+              },
+              {
+                "kind": "account",
+                "path": "buyer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "project_vault",
+          "writable": true
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true
+        },
+        {
+          "name": "project_whitelist"
+        },
+        {
+          "name": "buyer_payment_account",
+          "writable": true
+        },
+        {
+          "name": "payment_mint"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111112"
+        }
+      ],
+      "args": [
+        {
+          "name": "token_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "add_to_whitelist",
+      "discriminator": [41, 92, 176, 12, 118, 115, 25, 151],
+      "accounts": [
+        {
+          "name": "creator",
+          "signer": true
+        },
+        {
+          "name": "project"
+        },
+        {
+          "name": "project_whitelist",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "addresses",
+          "type": {
+            "vec": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "pause_platform",
+      "discriminator": [64, 229, 111, 132, 192, 145, 14, 70],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "platform",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resume_platform",
+      "discriminator": [142, 23, 42, 96, 16, 31, 153, 219],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "platform",
+          "writable": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "PlatformAccount",
+      "discriminator": [48, 162, 181, 95, 143, 224, 167, 89]
+    },
+    {
+      "name": "ProjectAccount",
+      "discriminator": [205, 222, 112, 7, 165, 155, 206, 218]
+    },
+    {
+      "name": "SaleRound",
+      "discriminator": [158, 118, 167, 63, 253, 21, 217, 52]
+    },
+    {
+      "name": "ProjectVault",
+      "discriminator": [12, 35, 69, 49, 94, 109, 124, 22]
+    },
+    {
+      "name": "PlatformTreasury",
+      "discriminator": [78, 234, 122, 89, 156, 203, 178, 45]
+    },
+    {
+      "name": "RoundBuyerAccount",
+      "discriminator": [89, 134, 176, 201, 87, 23, 156, 78]
+    },
+    {
+      "name": "ProjectWhitelist",
+      "discriminator": [234, 156, 78, 90, 123, 45, 67, 89]
+    }
+  ],
+  "types": [
+    {
+      "name": "PlatformAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "platform_fee",
+            "type": "u16"
+          },
+          {
+            "name": "total_projects",
+            "type": "u64"
+          },
+          {
+            "name": "is_paused",
+            "type": "bool"
+          },
+          {
+            "name": "min_project_duration",
+            "type": "i64"
+          },
+          {
+            "name": "max_project_duration",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProjectAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": {
+              "defined": {
+                "name": "ProjectCategory"
+              }
+            }
+          },
+          {
+            "name": "website",
+            "type": "string"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ProjectStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "total_raised",
+            "type": "u64"
+          },
+          {
+            "name": "target_amount",
+            "type": "u64"
+          },
+          {
+            "name": "current_round",
+            "type": "u64"
+          },
+          {
+            "name": "total_rounds",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SaleRound",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "sale_type",
+            "type": {
+              "defined": {
+                "name": "SaleType"
+              }
+            }
+          },
+          {
+            "name": "round_number",
+            "type": "u64"
+          },
+          {
+            "name": "token_price",
+            "type": "u64"
+          },
+          {
+            "name": "total_tokens",
+            "type": "u64"
+          },
+          {
+            "name": "tokens_sold",
+            "type": "u64"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
+          },
+          {
+            "name": "max_tokens_per_buyer",
+            "type": "u64"
+          },
+          {
+            "name": "whitelist_required",
+            "type": "bool"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoundBuyerAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "round_number",
+            "type": "u64"
+          },
+          {
+            "name": "tokens_purchased",
+            "type": "u64"
+          },
+          {
+            "name": "amount_paid",
+            "type": "u64"
+          },
+          {
+            "name": "purchase_time",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProjectVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_deposited",
+            "type": "u64"
+          },
+          {
+            "name": "total_withdrawn",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlatformTreasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_fees",
+            "type": "u64"
+          },
+          {
+            "name": "total_withdrawn",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProjectWhitelist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "u64"
+          },
+          {
+            "name": "round_number",
+            "type": "u64"
+          },
+          {
+            "name": "whitelisted_addresses",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProjectCategory",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "DeFi"
+          },
+          {
+            "name": "Gaming"
+          },
+          {
+            "name": "AI"
+          },
+          {
+            "name": "NFT"
+          },
+          {
+            "name": "Infrastructure"
+          },
+          {
+            "name": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProjectStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "Completed"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SaleType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Seed"
+          },
+          {
+            "name": "Private"
+          },
+          {
+            "name": "Public"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "PlatformInitialized",
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237]
+    },
+    {
+      "name": "ProjectCreated",
+      "discriminator": [134, 68, 7, 186, 200, 139, 86, 199]
+    },
+    {
+      "name": "SaleRoundCreated",
+      "discriminator": [213, 98, 185, 72, 69, 148, 104, 151]
+    },
+    {
+      "name": "TokensPurchased",
+      "discriminator": [102, 6, 61, 18, 1, 218, 235, 234]
+    },
+    {
+      "name": "ProjectStatusChanged",
+      "discriminator": [89, 134, 176, 201, 87, 23, 156, 78]
+    },
+    {
+      "name": "PlatformPaused",
+      "discriminator": [64, 229, 111, 132, 192, 145, 14, 70]
+    },
+    {
+      "name": "PlatformResumed",
+      "discriminator": [142, 23, 42, 96, 16, 31, 153, 219]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ProjectNotFound",
+      "msg": "Project not found"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6002,
+      "name": "ProjectNotActive",
+      "msg": "Project is not active"
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientTokens",
+      "msg": "Insufficient tokens available"
+    },
+    {
+      "code": 6004,
+      "name": "ExceedsPurchaseLimit",
+      "msg": "Purchase amount exceeds limit"
+    },
+    {
+      "code": 6005,
+      "name": "NotWhitelisted",
+      "msg": "Buyer is not whitelisted"
+    },
+    {
+      "code": 6006,
+      "name": "SaleNotStarted",
+      "msg": "Sale has not started yet"
+    },
+    {
+      "code": 6007,
+      "name": "SaleEnded",
+      "msg": "Sale has ended"
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidTokenAmount",
+      "msg": "Invalid token amount"
+    },
+    {
+      "code": 6010,
+      "name": "PlatformPaused",
+      "msg": "Platform is paused"
+    },
+    {
+      "code": 6011,
+      "name": "ProjectPaused",
+      "msg": "Project is paused"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidParameters",
+      "msg": "Invalid parameters provided"
+    },
+    {
+      "code": 6013,
+      "name": "RoundNotActive",
+      "msg": "Sale round is not active"
+    },
+    {
+      "code": 6014,
+      "name": "WhitelistRequired",
+      "msg": "Whitelist is required for this round"
+    }
+  ]
+}

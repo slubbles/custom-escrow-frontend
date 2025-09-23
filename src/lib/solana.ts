@@ -1,7 +1,8 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Program, AnchorProvider, setProvider, Idl } from '@coral-xyz/anchor';
-import { PROGRAM_ID, PLATFORM_FEE_RECIPIENT } from './pdas';
+import { MULTI_PRESALE_PROGRAM_ID, ESCROW_PROGRAM_ID, PLATFORM_FEE_RECIPIENT } from './pdas';
 import escrowIdl from './escrow-idl.json';
+import multiPresaleIdl from './multi-presale-idl.json';
 
 // Environment variables
 export const SOLANA_NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
@@ -13,11 +14,12 @@ export const connection = new Connection(RPC_URL, {
   confirmTransactionInitialTimeout: 60000,
 });
 
-// Export IDL for use in program initialization
+// Export IDLs for use in program initialization
 export const ESCROW_IDL = escrowIdl as Idl;
+export const MULTI_PRESALE_IDL = multiPresaleIdl as Idl;
 
 // Re-export important constants
-export { PROGRAM_ID, PLATFORM_FEE_RECIPIENT };
+export { MULTI_PRESALE_PROGRAM_ID, ESCROW_PROGRAM_ID, PLATFORM_FEE_RECIPIENT };
 
 // Token Sale Account Structure
 export interface TokenSale {
@@ -45,7 +47,7 @@ export interface BuyerAccount {
   bump: number;
 }
 
-// PDA Derivation Functions
+// PDA Derivation Functions (Legacy - for backward compatibility)
 export const getTokenSalePDA = (seller: PublicKey, tokenMint: PublicKey) => {
   return PublicKey.findProgramAddressSync(
     [
@@ -53,7 +55,7 @@ export const getTokenSalePDA = (seller: PublicKey, tokenMint: PublicKey) => {
       seller.toBuffer(),
       tokenMint.toBuffer()
     ],
-    PROGRAM_ID
+    ESCROW_PROGRAM_ID
   );
 };
 
@@ -63,7 +65,7 @@ export const getTokenVaultPDA = (tokenSalePDA: PublicKey) => {
       Buffer.from('token_vault'),
       tokenSalePDA.toBuffer()
     ],
-    PROGRAM_ID
+    ESCROW_PROGRAM_ID
   );
 };
 
@@ -74,7 +76,7 @@ export const getBuyerAccountPDA = (buyer: PublicKey, tokenSalePDA: PublicKey) =>
       buyer.toBuffer(),
       tokenSalePDA.toBuffer()
     ],
-    PROGRAM_ID
+    ESCROW_PROGRAM_ID
   );
 };
 

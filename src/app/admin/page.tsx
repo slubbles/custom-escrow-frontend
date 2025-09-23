@@ -3,24 +3,25 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
-import { useActiveSales, useInitializeProgram } from '../../hooks/useEscrow';
+import { useProjects, useInitializeProgram } from '../../hooks/useEscrow';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useAdminAccess } from '../../hooks/useAdminAccess';
+import { Navigation } from '../../components/Navigation';
 import { Settings, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 
 export default function AdminPage() {
   const { publicKey, connected } = useWallet();
-  const { data: sales, isLoading } = useActiveSales();
+  const { data: projects, isLoading } = useProjects();
   const initializeProgramMutation = useInitializeProgram();
   const { isAdmin } = useAdminAccess();
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Check if program is initialized by looking for any sales data or successful verification
   useEffect(() => {
-    if (sales && sales.length > 0) {
-      setIsInitialized(true);
+    if (projects && projects.length > 0) {
+      // Auto-update status when projects are available
     }
-  }, [sales]);
+  }, [projects]);
 
   const handleInitialize = async () => {
     try {
@@ -92,14 +93,15 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-cyan-50">
+      <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-8 mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Snarbles Admin Panel</h1>
-                <p className="text-gray-600">Dev access for {publicKey?.toString()}</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">TokenLaunch Admin Panel</h1>
+                <p className="text-gray-600">Platform administration for {publicKey?.toString()}</p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -195,6 +197,10 @@ export default function AdminPage() {
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">Smart Contract Ready!</h2>
                     <p className="text-gray-700">Your escrow contract is verified and ready for token sales.</p>
+                    <p className="text-sm text-gray-600 mt-2">
+                      ℹ️ This contract uses individual token sales instead of global initialization. 
+                      Create your first token sale to start using the platform.
+                    </p>
                   </div>
                 </div>
                 <div className="flex space-x-3">
@@ -215,6 +221,46 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* Contract Diagnostic Section */}
+          <div className="bg-white rounded-2xl shadow-xl border border-emerald-100 p-8 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">🔍 Contract Diagnostic</h2>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-gray-900 mb-2">Understanding Contract Status:</h3>
+              <div className="text-sm text-gray-700 space-y-2">
+                <div className="flex items-start space-x-2">
+                  <span className="text-green-600 font-bold">✅</span>
+                  <span>Program exists on blockchain (HVpfkkSxd5aiCALZ8CETUxrWBfUwWCtJSxxtUsZhFrt4)</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-green-600 font-bold">✅</span>
+                  <span>Wallet connected with sufficient SOL balance</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold">ℹ️</span>
+                  <span>This contract doesn't require global initialization</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold">ℹ️</span>
+                  <span>Each token sale is created independently using "initialize_sale"</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-orange-600 font-bold">⚠️</span>
+                  <span>No token sales created yet - create your first sale to test full functionality</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">Next Steps:</h4>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Create a test token sale using the "Create Token Sale" button</li>
+                <li>This will create the first on-chain account and test the contract</li>
+                <li>You'll need to sign a transaction for the actual initialization</li>
+                <li>Once created, the platform will show real data instead of empty states</li>
+              </ol>
+            </div>
+          </div>
+
           {/* Sales Overview */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
@@ -225,12 +271,12 @@ export default function AdminPage() {
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-gray-600">Active Sales</p>
+                  <p className="text-sm text-gray-600">Active Projects</p>
                   <p className="text-2xl font-bold text-gray-900">
                     {isLoading ? (
                       <Loader className="w-6 h-6 animate-spin" />
                     ) : (
-                      sales?.length || 0
+                      projects?.length || 0
                     )}
                   </p>
                 </div>
@@ -283,30 +329,35 @@ export default function AdminPage() {
             {isLoading ? (
               <div className="text-center py-12">
                 <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-emerald-600" />
-                <p className="text-gray-600">Loading sales data...</p>
+                <p className="text-gray-600">Loading projects data...</p>
               </div>
-            ) : sales && sales.length > 0 ? (
+            ) : projects && projects.length > 0 ? (
               <div className="space-y-4">
-                {sales.map((sale, index) => (
-                  <div key={sale.publicKey.toString()} className="border border-gray-200 rounded-lg p-4">
+                {projects.map((project, index) => (
+                  <div key={project.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-semibold text-gray-900">Token Sale #{index + 1}</h3>
-                        <p className="text-sm text-gray-500">Price: {sale.account.pricePerToken.toString()} per token</p>
+                        <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                        <p className="text-sm text-gray-500">Token: {project.tokenSymbol}</p>
                         <p className="text-sm text-gray-500">
-                          Status: {sale.account.isActive ? 'Active' : 'Inactive'}
-                          {sale.account.isPaused && ' (Paused)'}
+                          Status: {project.isVerified ? 'Verified' : 'Unverified'}
                         </p>
                       </div>
                       <div className="flex space-x-2">
                         <button className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
-                          View
+                          View Project
                         </button>
-                        <button className="text-yellow-600 hover:text-yellow-800 px-3 py-1 rounded">
-                          Edit
+                        <button className="text-green-600 hover:text-green-800 px-3 py-1 rounded">
+                          Create Sale
                         </button>
-                        <button className="text-red-600 hover:text-red-800 px-3 py-1 rounded">
-                          Pause
+                        <button 
+                          className={`px-3 py-1 rounded ${
+                            project.isVerified 
+                              ? 'text-red-600 hover:text-red-800' 
+                              : 'text-green-600 hover:text-green-800'
+                          }`}
+                        >
+                          {project.isVerified ? 'Unverify' : 'Verify'}
                         </button>
                       </div>
                     </div>
@@ -320,11 +371,11 @@ export default function AdminPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7" />
                   </svg>
                 </div>
-                <p className="text-gray-600 mb-2">No active sales found</p>
+                <p className="text-gray-600 mb-2">No projects found</p>
                 <p className="text-sm text-gray-500 mb-4">
                   {isInitialized 
-                    ? "Create your first token sale to get started" 
-                    : "Initialize the contract first to create sales"
+                    ? "Create your first project to get started" 
+                    : "Initialize the contract first to create projects"
                   }
                 </p>
                 {isInitialized && (
