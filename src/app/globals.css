@@ -32,22 +32,22 @@
 }
 
 @layer components {
-  /* Button variants inspired by landscape */
+  /* Enhanced Button variants */
   .btn-primary {
-    @apply bg-gradient-mountain text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-coral-400 focus:ring-offset-2;
+    @apply bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-forest-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-forest-600 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-forest-400 focus:ring-offset-2;
+    @apply bg-gradient-to-r from-forest-500 to-forest-600 hover:from-forest-600 hover:to-forest-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-forest-400 focus:ring-offset-2;
   }
   
   .btn-outline {
-    @apply border-2 border-mountain-300 text-mountain-700 px-6 py-3 rounded-lg font-semibold hover:bg-mountain-50 transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-mountain-400 focus:ring-offset-2;
+    @apply bg-white/80 backdrop-blur-sm border-2 border-sky-200 text-sky-700 px-6 py-3 rounded-xl font-semibold hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-lg transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2;
   }
   
-  /* Card components */
+  /* Enhanced Card components */
   .card {
-    @apply bg-white/80 backdrop-blur-sm border border-mountain-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply bg-white/90 backdrop-blur-md border border-cream-200/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1;
   }
   
   .card-elevated {
