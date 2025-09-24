@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Program, AnchorProvider, BN, setProvider } from '@coral-xyz/anchor';
 import toast from 'react-hot-toast';
 
@@ -29,7 +29,7 @@ import {
   PROGRAM_ID,
   PLATFORM_FEE_RECIPIENT 
 } from '../lib/pdas';
-import { connection, ESCROW_IDL } from '../lib/solana';
+import { connection, ESCROW_IDL, getAssociatedTokenAddress } from '../lib/solana';
 
 /**
  * Hook to get the initialized Anchor program

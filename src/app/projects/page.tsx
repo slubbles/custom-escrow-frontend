@@ -82,6 +82,11 @@ export default function ProjectsPage() {
   const { data: projects, isLoading, error, refetch } = useProjects();
   const { connected } = useWallet();
 
+  // Debug logging
+  console.log('Projects page - projects:', projects);
+  console.log('Projects page - loading:', isLoading);
+  console.log('Projects page - error:', error);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">

@@ -3,7 +3,8 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
-import { useProjects, useInitializeProgram } from '../../hooks/useEscrow';
+import { useProjects } from '../../hooks/useEscrow';
+import { usePlatformInfo, useInitializePlatform } from '../../hooks/useMultiPresale';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useAdminAccess } from '../../hooks/useAdminAccess';
 import { Navigation } from '../../components/Navigation';
@@ -12,20 +13,25 @@ import { Settings, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 export default function AdminPage() {
   const { publicKey, connected } = useWallet();
   const { data: projects, isLoading } = useProjects();
-  const initializeProgramMutation = useInitializeProgram();
+  const { data: platformInfo, isLoading: platformLoading } = usePlatformInfo();
+  const initializePlatformMutation = useInitializePlatform();
   const { isAdmin } = useAdminAccess();
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Check if program is initialized by looking for any sales data or successful verification
+  // Check if platform is initialized
   useEffect(() => {
-    if (projects && projects.length > 0) {
-      // Auto-update status when projects are available
+    if (platformInfo) {
+      setIsInitialized(true);
     }
-  }, [projects]);
+  }, [platformInfo]);
 
   const handleInitialize = async () => {
     try {
-      const result = await initializeProgramMutation.mutateAsync();
+      const result = await initializePlatformMutation.mutateAsync({
+        platformFee: 250, // 2.5%
+        minProjectDuration: 86400, // 1 day in seconds
+        maxProjectDuration: 31536000, // 1 year in seconds
+      });
       if (result.success) {
         setIsInitialized(true);
       }
@@ -36,8 +42,8 @@ export default function AdminPage() {
   };
 
   // Handle initialization error state
-  const initializationError = initializeProgramMutation.error;
-  const hasInitializationError = initializeProgramMutation.isError;
+  const initializationError = initializePlatformMutation.error;
+  const hasInitializationError = initializePlatformMutation.isError;
 
   if (!connected) {
     return (
@@ -123,7 +129,7 @@ export default function AdminPage() {
                     {initializationError?.message || 'An error occurred while verifying the smart contract.'}
                   </p>
                   <button
-                    onClick={() => initializeProgramMutation.reset()}
+                    onClick={() => initializePlatformMutation.reset()}
                     className="mt-2 text-red-600 hover:text-red-800 font-medium text-sm"
                   >
                     Try Again
@@ -161,23 +167,28 @@ export default function AdminPage() {
                     <div className="flex-shrink-0 ml-6">
                       <button
                         onClick={handleInitialize}
-                        disabled={initializeProgramMutation.isPending || isInitialized}
+                        disabled={initializePlatformMutation.isPending || isInitialized || platformLoading}
                         className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-8 py-4 rounded-xl hover:from-emerald-700 hover:to-green-700 transition-all duration-200 font-semibold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3"
                       >
-                        {initializeProgramMutation.isPending ? (
+                        {initializePlatformMutation.isPending ? (
                           <>
                             <Loader className="w-6 h-6 animate-spin" />
-                            <span>Verifying...</span>
+                            <span>Initializing Platform...</span>
                           </>
                         ) : isInitialized ? (
                           <>
                             <CheckCircle className="w-6 h-6" />
-                            <span>Contract Verified</span>
+                            <span>Platform Ready</span>
+                          </>
+                        ) : platformLoading ? (
+                          <>
+                            <Loader className="w-6 h-6 animate-spin" />
+                            <span>Checking Status...</span>
                           </>
                         ) : (
                           <>
                             <Settings className="w-6 h-6" />
-                            <span>Verify Contract</span>
+                            <span>Initialize Platform</span>
                           </>
                         )}
                       </button>

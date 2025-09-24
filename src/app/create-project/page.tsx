@@ -23,21 +23,9 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { projectCreationSchema, ProjectCategory as ValidationProjectCategory } from '@/lib/validation';
 
-// Validation schema
-const projectSchema = z.object({
-  name: z.string().min(1, 'Project name is required').max(50, 'Project name must be under 50 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description must be under 500 characters'),
-  category: z.nativeEnum(ProjectCategory, { errorMap: () => ({ message: 'Please select a category' }) }),
-  website: z.string().url('Invalid website URL').optional().or(z.literal('')),
-  twitter: z.string().url('Invalid Twitter URL').optional().or(z.literal('')),
-  discord: z.string().url('Invalid Discord URL').optional().or(z.literal('')),
-  telegram: z.string().url('Invalid Telegram URL').optional().or(z.literal('')),
-  tokenMint: z.string().min(1, 'Token mint address is required'),
-  targetAmount: z.number().min(1, 'Target amount must be greater than 0'),
-});
-
-type ProjectFormData = z.infer<typeof projectSchema>;
+type ProjectFormData = z.infer<typeof projectCreationSchema>;
 
 interface StepProps {
   formData: ProjectFormData;
@@ -101,15 +89,17 @@ function Step1BasicInfo({ formData, updateFormData, errors, register }: StepProp
         <label className="block text-sm font-medium text-mountain-700 mb-2">
           Category *
         </label>
-        <select
+                <select
           {...register('category')}
           className={`w-full px-4 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-sky-400 focus:border-sky-400 ${
             errors.category ? 'border-red-500' : 'border-mountain-300'
           }`}
         >
           <option value="">Select a category</option>
-          {Object.values(ProjectCategory).map(category => (
-            <option key={category} value={category}>{category}</option>
+          {Object.values(ValidationProjectCategory).map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
           ))}
         </select>
         {errors.category && (
@@ -415,7 +405,7 @@ export default function CreateProjectPage() {
     watch,
     formState: { errors, isValid }
   } = useForm<ProjectFormData>({
-    resolver: zodResolver(projectSchema),
+    resolver: zodResolver(projectCreationSchema),
     mode: 'onChange'
   });
 

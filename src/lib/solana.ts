@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Program, AnchorProvider, setProvider, Idl } from '@coral-xyz/anchor';
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { MULTI_PRESALE_PROGRAM_ID, ESCROW_PROGRAM_ID, PLATFORM_FEE_RECIPIENT } from './pdas';
 import escrowIdl from './escrow-idl.json';
 import multiPresaleIdl from './multi-presale-idl.json';
@@ -78,6 +79,18 @@ export const getBuyerAccountPDA = (buyer: PublicKey, tokenSalePDA: PublicKey) =>
     ],
     ESCROW_PROGRAM_ID
   );
+};
+
+// Utility function for associated token addresses
+export const getAssociatedTokenAddress = async (mint: PublicKey, owner: PublicKey) => {
+  return PublicKey.findProgramAddressSync(
+    [
+      owner.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  )[0];
 };
 
 // Utility Functions

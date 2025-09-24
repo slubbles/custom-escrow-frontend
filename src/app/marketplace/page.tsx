@@ -242,14 +242,19 @@ function FilterSidebar({
 }
 
 export default function MarketplacePage() {
-  const { data: projects, isLoading } = useMultiPresaleProjects();
+  const { connected } = useWallet();
+  const { data: projects = [], isLoading, error } = useMultiPresaleProjects();
+  const [sortBy, setSortBy] = useState('newest');
   const [filters, setFilters] = useState({
+    search: '',
     category: '',
     status: '',
-    saleType: '',
-    search: ''
   });
-  const [sortBy, setSortBy] = useState('newest');
+
+  // Debug logging
+  console.log('Marketplace - projects:', projects);
+  console.log('Marketplace - loading:', isLoading);
+  console.log('Marketplace - error:', error);
 
   // Filter and sort projects
   const filteredProjects = projects?.filter(project => {
@@ -353,7 +358,44 @@ export default function MarketplacePage() {
 
             {/* Projects Grid */}
             <div className="lg:col-span-3">
-              {sortedProjects.length > 0 ? (
+              {isLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white rounded-2xl shadow-lg border border-cream-200 p-6 animate-pulse">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-mountain-200 rounded-lg"></div>
+                          <div>
+                            <div className="h-6 bg-mountain-200 rounded w-32 mb-2"></div>
+                            <div className="h-4 bg-mountain-200 rounded w-16"></div>
+                          </div>
+                        </div>
+                        <div className="h-6 bg-mountain-200 rounded w-20"></div>
+                      </div>
+                      <div className="h-16 bg-mountain-200 rounded mb-4"></div>
+                      <div className="h-8 bg-mountain-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Unable to Load Projects
+                  </h3>
+                  <p className="text-white/70 mb-4">
+                    There was an error connecting to the blockchain. The platform may need to be initialized.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : sortedProjects.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2">
                   {sortedProjects.map((project) => (
                     <ProjectCard key={project.id} project={project} />
@@ -365,15 +407,23 @@ export default function MarketplacePage() {
                   <h3 className="text-xl font-semibold text-white mb-2">
                     {filters.search || filters.category || filters.status 
                       ? 'No Projects Match Your Filters'
-                      : 'No Active Projects'
+                      : 'No Projects Yet'
                     }
                   </h3>
-                  <p className="text-white/70">
+                  <p className="text-white/70 mb-6">
                     {filters.search || filters.category || filters.status
                       ? 'Try adjusting your search criteria or filters.'
-                      : 'Check back soon for new token sale opportunities!'
+                      : 'Be the first to create a token sale project!'
                     }
                   </p>
+                  {connected && (
+                    <Link 
+                      href="/create-project"
+                      className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center"
+                    >
+                      Create First Project
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
