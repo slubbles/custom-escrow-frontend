@@ -1,155 +1,123 @@
 'use client';
 
-import { useUserPortfolio } from '@/hooks/useEscrow';
+import { usePortfolio } from '@/hooks/usePortfolio';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Navigation } from '@/components/Navigation';
-import { Wallet, TrendingUp, Clock, Gift, Lock, Unlock } from 'lucide-react';
-import { BN } from '@coral-xyz/anchor';
+import { Wallet, TrendingUp, Clock, Gift, Target, Calendar, DollarSign, AlertCircle, CheckCircle, Users, Activity } from 'lucide-react';
+import { PortfolioInvestment } from '@/hooks/usePortfolio';
+import { format } from 'date-fns';
 
-function VestingCard({ holding }: { holding: any }) {
-  // Calculate vesting progress
-  const now = Math.floor(Date.now() / 1000);
-  const vestingStart = holding.vestingSchedule.startTime.toNumber();
-  const cliffEnd = vestingStart + holding.vestingSchedule.cliffDuration.toNumber();
-  const vestingEnd = vestingStart + holding.vestingSchedule.vestingDuration.toNumber();
-  
-  const isCliffPassed = now >= cliffEnd;
-  const isVestingComplete = now >= vestingEnd;
-  
-  const totalTokens = holding.tokensPurchased.toNumber();
-  const claimedTokens = holding.claimedTokens.toNumber();
-  
-  let availableTokens = holding.claimableTokens.toNumber();
-
-  const vestingProgress = isVestingComplete ? 100 : 
-    isCliffPassed ? ((now - cliffEnd) / (vestingEnd - cliffEnd)) * 100 : 0;
+function InvestmentCard({ investment }: { investment: PortfolioInvestment }) {
+  const vestingProgress = investment.isVested ? 100 : 
+    investment.vestingStartDate && investment.vestingEndDate ? 
+    Math.max(0, Math.min(100, ((Date.now() - investment.vestingStartDate.getTime()) / 
+    (investment.vestingEndDate.getTime() - investment.vestingStartDate.getTime())) * 100)) : 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-6">
+    <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-6 hover:shadow-xl transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-mountain-900">{holding.project.name}</h3>
-          <p className="text-sm text-mountain-600">Vesting Schedule</p>
+          <h3 className="text-lg font-semibold text-mountain-900">{investment.projectName}</h3>
+          <p className="text-sm text-mountain-600">{investment.saleType} Sale - Round {investment.roundNumber}</p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-mountain-900">
-            {(totalTokens / 1e6).toLocaleString()}
+            {investment.tokensPurchased.toLocaleString()}
           </div>
-          <div className="text-sm text-mountain-500">Total Tokens</div>
+          <div className="text-sm text-mountain-500">Tokens</div>
+        </div>
+      </div>
+
+      {/* Investment Summary */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <div className="text-sm text-mountain-600">Invested</div>
+          <div className="text-lg font-semibold text-mountain-900">{investment.totalInvested.toFixed(4)} SOL</div>
+        </div>
+        <div>
+          <div className="text-sm text-mountain-600">Current Value</div>
+          <div className="text-lg font-semibold text-mountain-900">{investment.currentValue.toFixed(4)} SOL</div>
+        </div>
+      </div>
+
+      {/* P&L Display */}
+      <div className="mb-4 p-3 rounded-lg bg-mountain-50">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-mountain-600">P&L</span>
+          <div className={`text-right ${investment.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="font-semibold">
+              {investment.pnl >= 0 ? '+' : ''}{investment.pnl.toFixed(4)} SOL
+            </div>
+            <div className="text-sm">
+              ({investment.pnl >= 0 ? '+' : ''}{investment.pnlPercentage.toFixed(2)}%)
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Vesting Progress */}
-      <div className="mb-4">
-        <div className="flex justify-between text-sm text-mountain-600 mb-2">
-          <span>Vesting Progress</span>
-          <span>{vestingProgress.toFixed(1)}%</span>
-        </div>
-        <div className="w-full bg-cream-200 rounded-full h-2">
-          <div 
-            className="bg-sky-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${vestingProgress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Token Distribution */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="text-center">
-          <div className="text-lg font-semibold text-green-600">
-            {(claimedTokens / 1e6).toLocaleString()}
+      {investment.vestingStartDate && (
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-mountain-600 mb-2">
+            <span>Vesting Progress</span>
+            <span>{vestingProgress.toFixed(1)}%</span>
           </div>
-          <div className="text-xs text-mountain-500">Claimed</div>
-        </div>
-        <div className="text-center">
-          <div className="text-lg font-semibold text-sky-600">
-            {(availableTokens / 1e6).toLocaleString()}
-          </div>
-          <div className="text-xs text-mountain-500">Available</div>
-        </div>
-        <div className="text-center">
-          <div className="text-lg font-semibold text-mountain-400">
-            {((totalTokens - claimedTokens - availableTokens) / 1e6).toLocaleString()}
-          </div>
-          <div className="text-xs text-mountain-500">Locked</div>
-        </div>
-      </div>
-
-      {/* Vesting Timeline */}
-      <div className="bg-cream-50 rounded-lg p-4 mb-4">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="flex items-center text-mountain-500 mb-1">
-              <Clock className="w-4 h-4 mr-1" />
-              Cliff End
-            </div>
-            <div className="font-medium">
-              {new Date(cliffEnd * 1000).toLocaleDateString()}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center text-mountain-500 mb-1">
-              <Unlock className="w-4 h-4 mr-1" />
-              Vesting End
-            </div>
-            <div className="font-medium">
-              {new Date(vestingEnd * 1000).toLocaleDateString()}
-            </div>
+          <div className="w-full bg-cream-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-sky-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${Math.min(vestingProgress, 100)}%` }}
+            ></div>
           </div>
         </div>
-      </div>
-
-      {/* Claim Button */}
-      {availableTokens > 0 && (
-        <button className="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
-          Claim {(availableTokens / 1e6).toLocaleString()} Tokens
-        </button>
       )}
 
-      {!isCliffPassed && (
-        <div className="text-center py-3">
-          <div className="flex items-center justify-center text-mountain-500">
-            <Lock className="w-4 h-4 mr-2" />
+      {/* Token Status */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="text-center p-2 bg-green-50 rounded-lg">
+          <div className="text-lg font-semibold text-green-600">
+            {investment.claimedTokens.toLocaleString()}
+          </div>
+          <div className="text-xs text-mountain-600">Claimed</div>
+        </div>
+        <div className="text-center p-2 bg-sky-50 rounded-lg">
+          <div className="text-lg font-semibold text-sky-600">
+            {investment.remainingTokens.toLocaleString()}
+          </div>
+          <div className="text-xs text-mountain-600">Remaining</div>
+        </div>
+      </div>
+
+      {/* Purchase Date */}
+      <div className="flex items-center text-sm text-mountain-600 mb-4">
+        <Calendar className="w-4 h-4 mr-2" />
+        Purchased: {format(investment.purchaseDate, 'MMM dd, yyyy')}
+      </div>
+
+      {/* Action Buttons */}
+      {investment.canClaim && (
+        <button className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center">
+          <Gift className="w-4 h-4 mr-2" />
+          Claim {investment.remainingTokens.toLocaleString()} Tokens
+        </button>
+      )}
+      
+      {!investment.isVested && investment.nextClaimDate && (
+        <div className="bg-golden-50 rounded-lg p-3 mt-4">
+          <div className="flex items-center text-golden-700">
+            <Clock className="w-4 h-4 mr-2" />
             <span className="text-sm">
-              Cliff period ends in {Math.ceil((cliffEnd - now) / 86400)} days
+              Next claim: {format(investment.nextClaimDate, 'MMM dd, yyyy')}
             </span>
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function ReferralStats({ referralStats }: { referralStats: any }) {
-  const totalReferrals = referralStats.totalReferrals;
-  const totalBonus = referralStats.totalEarnings.toNumber();
-
-  return (
-    <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-6">
-      <div className="flex items-center mb-4">
-        <Gift className="w-6 h-6 text-golden-600 mr-3" />
-        <h3 className="text-lg font-semibold text-mountain-900">Referral Rewards</h3>
-      </div>
-
-      <div className="grid grid-cols-2 gap-6">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-golden-600">{totalReferrals}</div>
-          <div className="text-sm text-mountain-500">Total Referrals</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl font-bold text-golden-600">
-            {(totalBonus / 1e6).toLocaleString()}
-          </div>
-          <div className="text-sm text-mountain-500">Bonus Tokens</div>
-        </div>
-      </div>
-
-      {totalReferrals > 0 && (
-        <div className="mt-4 pt-4 border-t border-cream-200">
-          <h4 className="font-medium text-mountain-800 mb-2">Referral Summary</h4>
-          <div className="text-sm text-mountain-600">
-            You&apos;ve earned {(totalBonus / 1e6).toFixed(2)} bonus tokens from {totalReferrals} successful referrals.
+      {investment.isVested && investment.remainingTokens === 0 && (
+        <div className="bg-green-50 rounded-lg p-3 mt-4">
+          <div className="flex items-center text-green-700">
+            <CheckCircle className="w-4 h-4 mr-2" />
+            <span className="text-sm font-medium">Fully claimed</span>
           </div>
         </div>
       )}
@@ -158,21 +126,25 @@ function ReferralStats({ referralStats }: { referralStats: any }) {
 }
 
 export default function PortfolioPage() {
-  const { connected, publicKey } = useWallet();
-  const { data: portfolio, isLoading } = useUserPortfolio();
+  const { connected } = useWallet();
+  const { data: portfolioData, isLoading } = usePortfolio();
 
   if (!connected) {
     return (
-      <div className="min-h-screen bg-gradient-landscape">
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
         <Navigation />
         <div className="pt-24 pb-12">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <Wallet className="w-16 h-16 text-white mx-auto mb-6" />
-            <h1 className="text-4xl font-bold text-white mb-6">Your Portfolio</h1>
-            <p className="text-xl text-white/90 mb-8">
-              Connect your wallet to view your token investments and vesting schedules.
-            </p>
-            <WalletMultiButton className="!bg-white !text-mountain-900 hover:!bg-cream-100 !font-medium !px-6 !py-3 !rounded-lg !transition-colors" />
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <Wallet className="w-16 h-16 text-mountain-400 mx-auto mb-6" />
+              <h1 className="text-3xl font-bold text-mountain-900 mb-4">
+                Connect Your Wallet
+              </h1>
+              <p className="text-mountain-600 mb-8">
+                Connect your wallet to view your investment portfolio and track your token holdings.
+              </p>
+              <WalletMultiButton className="!bg-sky-600 hover:!bg-sky-700 !text-white !font-medium !px-8 !py-4 !rounded-lg !transition-colors" />
+            </div>
           </div>
         </div>
       </div>
@@ -181,13 +153,19 @@ export default function PortfolioPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-landscape">
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
         <Navigation />
         <div className="pt-24 pb-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-              <p className="text-white mt-4">Loading portfolio...</p>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center items-center py-32">
+              <div className="text-center">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-sky-200 border-t-sky-600 mx-auto mb-6"></div>
+                  <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-r-golden-400 mx-auto animate-spin" style={{animationDelay: '0.5s', animationDuration: '1.5s'}}></div>
+                </div>
+                <h2 className="text-2xl font-bold text-mountain-900 mb-2">Loading Your Portfolio</h2>
+                <p className="text-mountain-600">Fetching your investment data...</p>
+              </div>
             </div>
           </div>
         </div>
@@ -195,119 +173,100 @@ export default function PortfolioPage() {
     );
   }
 
-  const totalInvestmentValue = portfolio?.holdings?.reduce((sum: number, holding: any) => 
-    sum + (holding.tokensPurchased.toNumber() * 0.1), 0) || 0; // Mock price calculation
-
-  const totalTokens = portfolio?.holdings?.reduce((sum: number, holding: any) => 
-    sum + holding.tokensPurchased.toNumber(), 0) || 0;
+  const { investments, summary } = portfolioData || { investments: [], summary: { totalInvested: 0, totalCurrentValue: 0, totalPnL: 0, totalPnLPercentage: 0, totalProjects: 0, activeInvestments: 0, totalTokensClaimed: 0, totalPendingTokens: 0 } };
 
   return (
-    <div className="min-h-screen bg-gradient-landscape">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50">
       <Navigation />
       
       {/* Header */}
-      <div className="pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Your Portfolio
-            </h1>
-            <p className="text-xl text-white/90 mb-6">
-              Track your investments, vesting schedules, and referral rewards.
-            </p>
+      <div className="pt-24 pb-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-mountain-900 mb-4">Investment Portfolio</h1>
+            <p className="text-xl text-mountain-600">Track your token sale investments and vesting schedules</p>
+          </div>
+
+          {/* Portfolio Summary */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <h2 className="text-2xl font-bold text-mountain-900 mb-6">Portfolio Summary</h2>
             
-            {/* Portfolio Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6">
-                <div className="text-3xl font-bold text-white">
-                  ${totalInvestmentValue.toLocaleString()}
-                </div>
-                <div className="text-white/80">Total Investment</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="text-center p-4 bg-sky-50 rounded-xl">
+                <DollarSign className="w-8 h-8 text-sky-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-mountain-900">{summary.totalInvested.toFixed(4)}</div>
+                <div className="text-sm text-mountain-600">Total Invested (SOL)</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6">
-                <div className="text-3xl font-bold text-white">
-                  {(totalTokens / 1e6).toLocaleString()}
-                </div>
-                <div className="text-white/80">Total Tokens</div>
+              
+              <div className="text-center p-4 bg-green-50 rounded-xl">
+                <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-mountain-900">{summary.totalCurrentValue.toFixed(4)}</div>
+                <div className="text-sm text-mountain-600">Current Value (SOL)</div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6">
-                <div className="text-3xl font-bold text-white">
-                  {portfolio?.holdings?.length || 0}
+              
+              <div className={`text-center p-4 rounded-xl ${summary.totalPnL >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <div className={`text-2xl font-bold ${summary.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {summary.totalPnL >= 0 ? '+' : ''}{summary.totalPnL.toFixed(4)}
                 </div>
-                <div className="text-white/80">Active Investments</div>
+                <div className="text-sm text-mountain-600">P&L (SOL)</div>
+                <div className={`text-xs ${summary.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ({summary.totalPnL >= 0 ? '+' : ''}{summary.totalPnLPercentage.toFixed(2)}%)
+                </div>
+              </div>
+              
+              <div className="text-center p-4 bg-golden-50 rounded-xl">
+                <Target className="w-8 h-8 text-golden-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-mountain-900">{summary.totalProjects}</div>
+                <div className="text-sm text-mountain-600">Projects</div>
+              </div>
+            </div>
+
+            {/* Additional Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-mountain-200">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-mountain-900">{summary.activeInvestments}</div>
+                <div className="text-sm text-mountain-600">Active Investments</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-green-600">{summary.totalTokensClaimed.toLocaleString()}</div>
+                <div className="text-sm text-mountain-600">Tokens Claimed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-sky-600">{summary.totalPendingTokens.toLocaleString()}</div>
+                <div className="text-sm text-mountain-600">Tokens Pending</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Portfolio Content */}
-      <div className="pb-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {portfolio && (portfolio.holdings?.length > 0 || portfolio.referralStats?.totalReferrals > 0) ? (
-            <div className="grid gap-8 lg:grid-cols-3">
-              {/* Vesting Schedules */}
-              <div className="lg:col-span-2 space-y-6">
-                <h2 className="text-2xl font-bold text-white mb-4">Vesting Schedules</h2>
-                {portfolio.holdings?.map((holding: any, index: number) => (
-                  <VestingCard key={index} holding={holding} />
-                ))}
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Referral Stats */}
-                {portfolio.referralStats && portfolio.referralStats.totalReferrals > 0 && (
-                  <ReferralStats referralStats={portfolio.referralStats} />
-                )}
-
-                {/* Quick Actions */}
-                <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-6">
-                  <h3 className="text-lg font-semibold text-mountain-900 mb-4">Quick Actions</h3>
-                  <div className="space-y-3">
-                    <button className="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                      Claim All Available
-                    </button>
-                    <button className="w-full border border-cream-300 text-mountain-700 hover:bg-cream-50 font-medium py-2 px-4 rounded-lg transition-colors">
-                      Export Portfolio
-                    </button>
-                  </div>
-                </div>
-
-                {/* Portfolio Stats */}
-                <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-6">
-                  <h3 className="text-lg font-semibold text-mountain-900 mb-4">Statistics</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-mountain-600">Projects</span>
-                      <span className="font-medium">{portfolio.holdings?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-mountain-600">Referrals</span>
-                      <span className="font-medium">{portfolio.referralStats?.totalReferrals || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-mountain-600">Wallet</span>
-                      <span className="font-medium font-mono text-xs">
-                        {publicKey?.toString().slice(0, 8)}...
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* Investments */}
+      <div className="pb-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {investments.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+              <Activity className="w-16 h-16 text-mountain-400 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-mountain-900 mb-4">No Investments Yet</h3>
+              <p className="text-mountain-600 mb-8 max-w-md mx-auto">
+                You haven't made any token purchases yet. Browse active projects to start building your portfolio.
+              </p>
+              <a
+                href="/projects"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white font-semibold rounded-lg hover:from-sky-700 hover:to-sky-800 transition-all"
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Browse Token Sales
+              </a>
             </div>
           ) : (
-            <div className="text-center py-12">
-              <TrendingUp className="w-16 h-16 text-white/50 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No Investments Yet</h3>
-              <p className="text-white/70 mb-6">Start investing in token sales to see your portfolio here.</p>
-              <button
-                onClick={() => window.location.href = '/projects'}
-                className="bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-              >
-                Browse Projects
-              </button>
-            </div>
+            <>
+              <h2 className="text-2xl font-bold text-mountain-900 mb-6">Your Investments</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {investments.map((investment, index) => (
+                  <InvestmentCard key={index} investment={investment} />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

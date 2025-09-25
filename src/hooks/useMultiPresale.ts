@@ -254,7 +254,7 @@ export function useSaleRounds(projectId?: number) {
 }
 
 /**
- * Hook to create a new project
+ * Hook to create a new project with enhanced validation and error handling
  */
 export function useCreateMultiPresaleProject() {
   const program = useMultiPresaleProgram();
@@ -267,24 +267,50 @@ export function useCreateMultiPresaleProject() {
         throw new Error('Wallet not connected or program not initialized');
       }
 
+      // Validate input parameters
+      if (!params.name || params.name.length < 3) {
+        throw new Error('Project name must be at least 3 characters long');
+      }
+      if (!params.description || params.description.length < 10) {
+        throw new Error('Project description must be at least 10 characters long');
+      }
+      if (!params.tokenMint) {
+        throw new Error('Token mint address is required');
+      }
+      if (!params.targetAmount || params.targetAmount <= 0) {
+        throw new Error('Target amount must be greater than 0');
+      }
+
       try {
+        // Validate token mint address
+        let tokenMint: PublicKey;
+        try {
+          tokenMint = new PublicKey(params.tokenMint);
+        } catch {
+          throw new Error('Invalid token mint address format');
+        }
+
         // Get platform info first to get the next project ID
         const [platformPDA] = getPlatformPDA();
-        const platformAccount = await (program.account as any).platformAccount.fetch(platformPDA);
-        const projectId = platformAccount.totalProjects;
+        let platformAccount;
+        try {
+          platformAccount = await (program.account as any).platformAccount.fetch(platformPDA);
+        } catch {
+          throw new Error('Platform not initialized. Please contact support.');
+        }
 
+        const projectId = platformAccount.totalProjects;
         const [projectPDA] = getMultiPresaleProjectPDA(projectId);
         const [projectVaultPDA] = getProjectVaultPDA(projectId);
-        const tokenMint = new PublicKey(params.tokenMint);
         
-        // Create project transaction
+        // Create project transaction with all social links
         const tx = await (program.methods as any)
           .createProject(
-            params.name,
-            params.description,
+            params.name.trim(),
+            params.description.trim(),
             { [params.category.toLowerCase()]: {} }, // Convert enum to object
-            params.website || '',
-            new BN(params.targetAmount)
+            params.website?.trim() || '',
+            new BN(Math.floor(params.targetAmount * LAMPORTS_PER_SOL)) // Convert to lamports
           )
           .accounts({
             creator: publicKey,
@@ -296,17 +322,43 @@ export function useCreateMultiPresaleProject() {
           })
           .transaction();
 
-        const signature = await program.provider.sendAndConfirm!(tx);
+        console.log('Sending create project transaction...');
+        const signature = await program.provider.sendAndConfirm!(tx, [], {
+          commitment: 'confirmed',
+          maxRetries: 3,
+        });
+        
+        console.log('Project created successfully with signature:', signature);
         
         // Invalidate and refetch projects
         queryClient.invalidateQueries({ queryKey: ['multiPresaleProjects'] });
         queryClient.invalidateQueries({ queryKey: ['platform'] });
+        queryClient.invalidateQueries({ queryKey: ['projects'] }); // Legacy compatibility
 
-        toast.success('Project created successfully!');
-        return { signature, success: true };
+        toast.success(`Project "${params.name}" created successfully!`);
+        return { 
+          signature, 
+          success: true, 
+          data: { 
+            projectId, 
+            projectPDA: projectPDA.toString() 
+          } 
+        };
       } catch (error: any) {
-        const errorMessage = error?.message || 'Failed to create project';
         console.error('Create project error:', error);
+        
+        // Parse specific Solana errors
+        let errorMessage = 'Failed to create project';
+        if (error.message?.includes('insufficient funds')) {
+          errorMessage = 'Insufficient SOL balance to create project';
+        } else if (error.message?.includes('already in use')) {
+          errorMessage = 'Project name already exists. Please choose a different name.';
+        } else if (error.message?.includes('Transaction was not confirmed')) {
+          errorMessage = 'Transaction failed to confirm. Please try again.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         toast.error(errorMessage);
         return { signature: '', success: false, error: errorMessage };
       }

@@ -231,3 +231,135 @@ export async function withErrorHandling<T>(
     return null;
   }
 }
+
+// Enhanced error categories for better error classification
+export enum ErrorCategory {
+  WALLET = 'wallet',
+  NETWORK = 'network',
+  TRANSACTION = 'transaction',
+  VALIDATION = 'validation', 
+  SMART_CONTRACT = 'smart_contract',
+  UNKNOWN = 'unknown'
+}
+
+export interface EnhancedError {
+  category: ErrorCategory;
+  code?: string;
+  message: string;
+  originalError?: any;
+  retryable: boolean;
+  userFriendlyMessage: string;
+  suggestedAction?: string;
+  timestamp: number;
+}
+
+// Enhanced error parsing with smart categorization
+export function parseEnhancedError(error: any): EnhancedError {
+  const timestamp = Date.now();
+  let category = ErrorCategory.UNKNOWN;
+  let retryable = false;
+  let userFriendlyMessage = 'An unexpected error occurred';
+  let suggestedAction: string | undefined;
+  let code: string | undefined;
+
+  const errorMessage = error?.message || error?.toString() || '';
+
+  // Categorize errors based on content
+  if (errorMessage.includes('wallet') || errorMessage.includes('not connected')) {
+    category = ErrorCategory.WALLET;
+    userFriendlyMessage = 'Wallet connection issue';
+    suggestedAction = 'Please connect your wallet and try again';
+    retryable = true;
+  } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('timeout')) {
+    category = ErrorCategory.NETWORK;
+    userFriendlyMessage = 'Network connection error';
+    suggestedAction = 'Check your internet connection and try again';
+    retryable = true;
+  } else if (errorMessage.includes('transaction') || errorMessage.includes('signature')) {
+    category = ErrorCategory.TRANSACTION;
+    userFriendlyMessage = 'Transaction failed';
+    suggestedAction = 'Please try the transaction again';
+    retryable = true;
+  } else if (errorMessage.includes('insufficient') || errorMessage.includes('balance')) {
+    category = ErrorCategory.WALLET;
+    userFriendlyMessage = 'Insufficient balance';
+    suggestedAction = 'Please add more SOL to your wallet';
+    retryable = false;
+  } else if (errorMessage.includes('program') || errorMessage.includes('anchor')) {
+    category = ErrorCategory.SMART_CONTRACT;
+    userFriendlyMessage = 'Smart contract error';
+    suggestedAction = 'Please contact support if this persists';
+    retryable = false;
+  } else if (errorMessage.includes('invalid') || errorMessage.includes('required')) {
+    category = ErrorCategory.VALIDATION;
+    userFriendlyMessage = 'Invalid input provided';
+    suggestedAction = 'Please check your input and try again';
+    retryable = false;
+  }
+
+  if (error?.code) {
+    code = error.code.toString();
+  }
+
+  return {
+    category,
+    code,
+    message: errorMessage,
+    originalError: error,
+    retryable,
+    userFriendlyMessage,
+    suggestedAction,
+    timestamp
+  };
+}
+
+// Enhanced error notification with better UX
+export function showEnhancedErrorNotification(error: EnhancedError) {
+  const message = error.suggestedAction 
+    ? `${error.userFriendlyMessage}. ${error.suggestedAction}`
+    : error.userFriendlyMessage;
+
+  toast.error(message, {
+    duration: error.retryable ? 4000 : 6000,
+    id: `error-${error.category}-${error.timestamp}`,
+    style: {
+      maxWidth: '500px',
+    },
+  });
+}
+
+// Hook for enhanced error handling with categories
+export function useEnhancedErrorHandler() {
+  const [errors, setErrors] = useState<EnhancedError[]>([]);
+
+  const handleEnhancedError = useCallback((error: any) => {
+    const parsedError = parseEnhancedError(error);
+    
+    console.error('Enhanced error handled:', {
+      error: parsedError,
+      timestamp: new Date().toISOString()
+    });
+
+    setErrors(prev => [...prev.slice(-9), parsedError]); // Keep last 10 errors
+    showEnhancedErrorNotification(parsedError);
+    
+    return parsedError;
+  }, []);
+
+  const clearErrors = useCallback(() => {
+    setErrors([]);
+  }, []);
+
+  const getErrorsByCategory = useCallback((category: ErrorCategory) => {
+    return errors.filter(error => error.category === category);
+  }, [errors]);
+
+  return {
+    errors,
+    handleEnhancedError,
+    clearErrors,
+    getErrorsByCategory,
+    hasErrors: errors.length > 0,
+    lastError: errors[errors.length - 1] || null
+  };
+}

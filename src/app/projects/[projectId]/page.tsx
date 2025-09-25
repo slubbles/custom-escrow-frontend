@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { Navigation } from '@/components/Navigation';
+import { PurchaseDialog } from '@/components/PurchaseDialog';
 import { useMultiPresaleProject, useSaleRounds, useBuyTokensMultiPresale } from '@/hooks/useMultiPresale';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -18,6 +19,7 @@ import {
   Shield,
   Info,
   ChevronRight,
+  CreditCard,
   CalendarDays,
   Check
 } from 'lucide-react';
@@ -32,6 +34,8 @@ export default function ProjectDetailPage() {
   const { connected } = useWallet();
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [selectedSaleRound, setSelectedSaleRound] = useState<SaleRound | null>(null);
 
   const { data: project, isLoading, error } = useMultiPresaleProject(projectId);
   const { data: saleRounds = [] } = useSaleRounds(projectId);
@@ -262,6 +266,17 @@ export default function ProjectDetailPage() {
                             <div className="text-sm text-mountain-600">
                               Max: {(Number(round.maxTokensPerBuyer) / 1e9).toFixed(2)} tokens
                             </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSaleRound(round);
+                                setShowPurchaseDialog(true);
+                              }}
+                              className="mt-2 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 flex items-center text-sm"
+                            >
+                              <CreditCard className="w-4 h-4 mr-1" />
+                              Purchase
+                            </button>
                           </div>
                         </div>
 
@@ -462,6 +477,24 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Purchase Dialog */}
+      {showPurchaseDialog && selectedSaleRound && project && (
+        <PurchaseDialog
+          isOpen={showPurchaseDialog}
+          onClose={() => {
+            setShowPurchaseDialog(false);
+            setSelectedSaleRound(null);
+          }}
+          projectId={projectId}
+          projectName={project.name}
+          roundNumber={selectedSaleRound.roundNumber}
+          saleType={Object.keys(selectedSaleRound.saleType)[0]}
+          tokenPrice={Number(selectedSaleRound.tokenPrice) / 1e9}
+          maxTokensPerBuyer={Number(selectedSaleRound.maxTokensPerBuyer) / 1e9}
+          saleEndTime={new Date(Number(selectedSaleRound.endTime) * 1000)}
+        />
+      )}
     </div>
   );
 }

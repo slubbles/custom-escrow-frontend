@@ -430,11 +430,12 @@ export enum EscrowError {
 }
 
 /**
- * Transaction result with signature
+ * Transaction result with signature and optional data
  */
 export interface TransactionResult {
   signature: string;
   success: boolean;
   error?: string;
   message?: string;
+  data?: any; // Optional data returned from the transaction
 }
