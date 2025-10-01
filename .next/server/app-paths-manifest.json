@@ -1,5 +1,18 @@
 {
-  "/page": "app/page.js",
+  "/admin/enhanced/page": "app/admin/enhanced/page.js",
   "/admin/page": "app/admin/page.js",
-  "/create/page": "app/create/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/create/page": "app/create/page.js",
+  "/dashboard/creator/page": "app/dashboard/creator/page.js",
+  "/investor-dashboard/page": "app/investor-dashboard/page.js",
+  "/marketplace/enhanced/page": "app/marketplace/enhanced/page.js",
+  "/marketplace/page": "app/marketplace/page.js",
+  "/portfolio/page": "app/portfolio/page.js",
+  "/page": "app/page.js",
+  "/projects/[projectId]/page": "app/projects/[projectId]/page.js",
+  "/projects/[projectId]/rounds/page": "app/projects/[projectId]/rounds/page.js",
+  "/projects/page": "app/projects/page.js",
+  "/sale/[id]/page": "app/sale/[id]/page.js",
+  "/system-test/page": "app/system-test/page.js",
+  "/create-project/page": "app/create-project/page.js"
 }

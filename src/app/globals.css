@@ -11,6 +11,8 @@
   body {
     @apply bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50 text-mountain-900 font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   /* Custom scrollbar */
@@ -29,20 +31,33 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-mountain-400;
   }
+
+  /* Selection styling */
+  ::selection {
+    @apply bg-sky-200 text-sky-900;
+  }
 }
 
 @layer components {
   /* Enhanced Button variants */
   .btn-primary {
-    @apply bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2;
+    @apply bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
   }
   
   .btn-secondary {
-    @apply bg-gradient-to-r from-forest-500 to-forest-600 hover:from-forest-600 hover:to-forest-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-forest-400 focus:ring-offset-2;
+    @apply bg-gradient-to-r from-forest-500 to-forest-600 hover:from-forest-600 hover:to-forest-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-forest-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2;
   }
   
   .btn-outline {
-    @apply bg-white/80 backdrop-blur-sm border-2 border-sky-200 text-sky-700 px-6 py-3 rounded-xl font-semibold hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-lg transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2;
+    @apply bg-white/80 backdrop-blur-sm border-2 border-sky-200 text-sky-700 px-6 py-3 rounded-xl font-semibold hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-mountain-100 text-mountain-700 px-6 py-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-mountain-400 focus:ring-offset-2;
   }
   
   /* Enhanced Card components */
@@ -51,14 +66,47 @@
   }
   
   .card-elevated {
-    @apply bg-white/90 backdrop-blur-md border border-mountain-200 rounded-xl p-8 shadow-2xl;
+    @apply bg-white/90 backdrop-blur-md border border-mountain-200 rounded-2xl p-8 shadow-2xl;
+  }
+
+  .card-interactive {
+    @apply bg-white/90 backdrop-blur-md border border-cream-200/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 cursor-pointer;
+  }
+
+  .card-glass {
+    @apply bg-white/40 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl;
   }
   
   /* Input components */
   .input-field {
-    @apply w-full px-4 py-3 border border-mountain-300 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all duration-200;
+    @apply w-full px-4 py-3 border border-mountain-300 rounded-xl bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all duration-200 placeholder:text-mountain-400;
+  }
+
+  .input-error {
+    @apply border-red-400 focus:ring-red-400 focus:border-red-400;
   }
   
+  /* Badge components */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-success {
+    @apply bg-forest-100 text-forest-800 border border-forest-200;
+  }
+
+  .badge-warning {
+    @apply bg-golden-100 text-golden-800 border border-golden-200;
+  }
+
+  .badge-info {
+    @apply bg-sky-100 text-sky-800 border border-sky-200;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 border border-red-200;
+  }
+
   /* Gradient text effects */
   .text-gradient-landscape {
     @apply bg-gradient-landscape bg-clip-text text-transparent;
@@ -66,6 +114,10 @@
   
   .text-gradient-mountain {
     @apply bg-gradient-mountain bg-clip-text text-transparent;
+  }
+
+  .text-gradient-sky {
+    @apply bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent;
   }
   
   /* Animation classes */
@@ -79,6 +131,19 @@
   
   .animate-float {
     animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Loading states */
+  .skeleton {
+    @apply bg-gradient-to-r from-mountain-200 via-mountain-300 to-mountain-200 bg-[length:200%_100%] animate-shimmer rounded;
   }
 }
 
@@ -99,5 +164,106 @@
   
   .text-shadow-lg {
     text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Glow effects */
+  .glow-sky {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+  }
+
+  .glow-forest {
+    box-shadow: 0 0 20px rgba(5, 150, 105, 0.3);
+  }
+
+  .glow-golden {
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+  }
+}
+
+/* Keyframe Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.focus-visible:focus {
+  @apply outline-none ring-2 ring-sky-400 ring-offset-2;
+}
+
+/* Print styles */
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+  
+  .no-print {
+    display: none !important;
   }
 }

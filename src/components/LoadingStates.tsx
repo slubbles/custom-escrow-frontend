@@ -16,60 +16,68 @@ export function LoadingSpinner({ size = 'md', className = '' }: {
   };
 
   return (
-    <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
+    <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} aria-label="Loading" />
   );
 }
 
-// Full page loading
+// Full page loading with enhanced animation
 export function PageLoading({ message = 'Loading...' }: { message?: string }) {
   return (
-    <div className="min-h-screen bg-gradient-landscape flex items-center justify-center">
-      <div className="text-center">
-        <LoadingSpinner size="xl" className="text-white mb-4 mx-auto" />
-        <p className="text-white text-lg font-medium">{message}</p>
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50 flex items-center justify-center">
+      <div className="text-center animate-fade-in">
+        <div className="relative">
+          <div className="absolute inset-0 animate-spin rounded-full h-20 w-20 border-4 border-sky-200 border-t-transparent mx-auto"></div>
+          <div className="absolute inset-0 animate-spin rounded-full h-20 w-20 border-4 border-transparent border-r-golden-400 mx-auto" style={{animationDelay: '0.3s', animationDuration: '1.5s'}}></div>
+          <div className="h-20 w-20 mx-auto flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-sky-600 animate-pulse" aria-hidden="true" />
+          </div>
+        </div>
+        <p className="mt-8 text-mountain-700 text-lg font-medium animate-pulse">{message}</p>
       </div>
     </div>
   );
 }
 
-// Card skeleton loader
+// Card skeleton loader with shimmer effect
 export function CardSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-cream-200 p-6 animate-pulse">
+    <div className="bg-white rounded-2xl shadow-xl border border-cream-200/50 p-6 overflow-hidden relative">
+      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+      
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-6 skeleton w-3/4 mb-2"></div>
+          <div className="h-4 skeleton w-1/2 mb-3"></div>
+          <div className="h-4 skeleton w-full mb-2"></div>
+          <div className="h-4 skeleton w-2/3"></div>
         </div>
-        <div className="w-4 h-4 bg-gray-200 rounded"></div>
+        <div className="w-4 h-4 skeleton rounded"></div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-gray-100 rounded-lg p-3">
-          <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+        <div className="bg-mountain-50 rounded-lg p-3">
+          <div className="h-3 skeleton w-1/2 mb-2"></div>
+          <div className="h-5 skeleton w-3/4"></div>
         </div>
-        <div className="bg-gray-100 rounded-lg p-3">
-          <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+        <div className="bg-mountain-50 rounded-lg p-3">
+          <div className="h-3 skeleton w-1/2 mb-2"></div>
+          <div className="h-5 skeleton w-3/4"></div>
         </div>
       </div>
 
-      <div className="bg-gray-100 rounded-lg p-3 mb-4">
-        <div className="h-3 bg-gray-200 rounded w-1/3 mb-2"></div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-2"></div>
+      <div className="bg-mountain-50 rounded-lg p-3 mb-4">
+        <div className="h-3 skeleton w-1/3 mb-2"></div>
+        <div className="w-full h-2 skeleton rounded-full mb-2"></div>
         <div className="grid grid-cols-3 gap-2">
-          <div className="h-3 bg-gray-200 rounded"></div>
-          <div className="h-3 bg-gray-200 rounded"></div>
-          <div className="h-3 bg-gray-200 rounded"></div>
+          <div className="h-3 skeleton"></div>
+          <div className="h-3 skeleton"></div>
+          <div className="h-3 skeleton"></div>
         </div>
       </div>
 
       <div className="flex justify-between items-center">
-        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-        <div className="h-8 bg-gray-200 rounded w-20"></div>
+        <div className="h-4 skeleton w-1/4"></div>
+        <div className="h-8 skeleton w-20 rounded-lg"></div>
       </div>
     </div>
   );
