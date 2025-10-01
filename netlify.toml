@@ -17,6 +17,9 @@
   # Next.js specific
   NEXT_TELEMETRY_DISABLED = "1"
   
+  # Disable secrets scanning for template/example files
+  SECRETS_SCAN_ENABLED = "false"
+  
   # Enable Next.js on Netlify
   NPM_FLAGS = "--legacy-peer-deps"
 
