@@ -11,8 +11,8 @@
   functions = "netlify/functions"
 
 [build.environment]
-  # Node version
-  NODE_VERSION = "18"
+  # Node version - Updated to support Solana packages
+  NODE_VERSION = "20.18.0"
   
   # Next.js specific
   NEXT_TELEMETRY_DISABLED = "1"
