@@ -2,153 +2,157 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Vercel's Geist Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @layer base {
+  :root {
+    /* Pure Black & White Theme - Vercel Style */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 100%;
+    --radius: 0.5rem;
+  }
+
   * {
     box-sizing: border-box;
+    @apply border-border;
   }
+  
+  html {
+    color-scheme: dark;
+  }
+  
   body {
-    @apply bg-gradient-to-br from-sky-50 via-cream-50 to-forest-50 text-mountain-900 font-sans;
+    @apply bg-black text-white font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* Custom scrollbar */
+  /* Custom scrollbar - Simple */
   ::-webkit-scrollbar {
     @apply w-2;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-cream-100;
+    @apply bg-black;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-mountain-300 rounded-full;
+    @apply bg-white/20 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-mountain-400;
+    @apply bg-white/30;
   }
 
-  /* Selection styling */
+  /* Selection styling - Simple */
   ::selection {
-    @apply bg-sky-200 text-sky-900;
+    @apply bg-white text-black;
   }
 }
 
 @layer components {
-  /* Enhanced Button variants */
+  /* Simple Black & White Button variants - Vercel style */
   .btn-primary {
-    @apply bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    @apply bg-white text-black px-6 py-3 rounded-lg font-medium shadow-sm hover:bg-white/90 transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
   }
   
   .btn-secondary {
-    @apply bg-gradient-to-r from-forest-500 to-forest-600 hover:from-forest-600 hover:to-forest-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-forest-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-white/10 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/20 transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-danger {
-    @apply bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2;
+    @apply bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-3 rounded-lg font-medium hover:bg-red-500/20 hover:border-red-500/30 transform transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black;
   }
   
   .btn-outline {
-    @apply bg-white/80 backdrop-blur-sm border-2 border-sky-200 text-sky-700 px-6 py-3 rounded-xl font-semibold hover:bg-sky-50 hover:border-sky-300 shadow-sm hover:shadow-lg transform transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2;
+    @apply bg-transparent border border-white/10 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/5 hover:border-white/20 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-black;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-mountain-100 text-mountain-700 px-6 py-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-mountain-400 focus:ring-offset-2;
+    @apply bg-transparent hover:bg-white/5 text-white/60 hover:text-white px-6 py-3 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black;
   }
   
-  /* Enhanced Card components */
+  
+  /* Simple Card components - Black & White */
   .card {
-    @apply bg-white/90 backdrop-blur-md border border-cream-200/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 shadow-lg hover:bg-white/[0.07] transition-all duration-200;
   }
   
   .card-elevated {
-    @apply bg-white/90 backdrop-blur-md border border-mountain-200 rounded-2xl p-8 shadow-2xl;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 shadow-xl;
   }
 
   .card-interactive {
-    @apply bg-white/90 backdrop-blur-md border border-cream-200/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 cursor-pointer;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 shadow-lg hover:bg-white/[0.07] hover:border-white/20 transition-all duration-200 cursor-pointer;
   }
 
   .card-glass {
-    @apply bg-white/40 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl;
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-xl p-6 shadow-xl hover:bg-white/[0.07] transition-all duration-200;
   }
   
-  /* Input components */
+  /* Input components - Black & White */
   .input-field {
-    @apply w-full px-4 py-3 border border-mountain-300 rounded-xl bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all duration-200 placeholder:text-mountain-400;
+    @apply w-full px-4 py-3 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/20 transition-all duration-150 placeholder:text-white/30;
   }
 
   .input-error {
-    @apply border-red-400 focus:ring-red-400 focus:border-red-400;
+    @apply border-red-500/50 focus:ring-red-500 focus:border-red-500;
   }
-  
-  /* Badge components */
+
+  /* Badge components - Simple */
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
   }
-
+  
   .badge-success {
-    @apply bg-forest-100 text-forest-800 border border-forest-200;
+    @apply bg-white/10 text-white border border-white/20;
   }
-
+  
   .badge-warning {
-    @apply bg-golden-100 text-golden-800 border border-golden-200;
+    @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/20;
   }
-
+  
   .badge-info {
-    @apply bg-sky-100 text-sky-800 border border-sky-200;
+    @apply bg-white/10 text-white border border-white/20;
   }
 
-  .badge-danger {
-    @apply bg-red-100 text-red-800 border border-red-200;
+  .badge-premium {
+    @apply bg-white text-black border-0;
   }
 
-  /* Gradient text effects */
-  .text-gradient-landscape {
-    @apply bg-gradient-landscape bg-clip-text text-transparent;
+  /* Status indicators - Simple */
+  .status-active {
+    @apply bg-white/10 text-white border border-white/20;
   }
   
-  .text-gradient-mountain {
-    @apply bg-gradient-mountain bg-clip-text text-transparent;
-  }
-
-  .text-gradient-sky {
-    @apply bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent;
+  .status-pending {
+    @apply bg-white/5 text-white/60 border border-white/10;
   }
   
-  /* Animation classes */
-  .animate-slide-up {
-    animation: slideUp 0.6s ease-out;
+  .status-completed {
+    @apply bg-white/10 text-white border border-white/20;
   }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.4s ease-in;
-  }
-  
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .animate-shimmer {
-    animation: shimmer 2s linear infinite;
-  }
-
-  /* Loading states */
-  .skeleton {
-    @apply bg-gradient-to-r from-mountain-200 via-mountain-300 to-mountain-200 bg-[length:200%_100%] animate-shimmer rounded;
-  }
-}
-
-@layer utilities {
-  /* Custom spacing for landscape-inspired layouts */
+}@layer utilities {
+  /* Dark Theme spacing */
   .section-spacing {
     @apply py-16 lg:py-24;
   }
@@ -157,26 +161,26 @@
     @apply px-4 sm:px-6 lg:px-8;
   }
   
-  /* Text shadows for better contrast on gradients */
+  /* Text shadows for dark theme contrast */
   .text-shadow {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   }
   
   .text-shadow-lg {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
   }
 
-  /* Glow effects */
-  .glow-sky {
-    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+  /* Neon glow effects - Dark Theme */
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
   }
 
-  .glow-forest {
-    box-shadow: 0 0 20px rgba(5, 150, 105, 0.3);
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
   }
 
-  .glow-golden {
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+  .glow-pink {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
   }
 }
 
@@ -252,9 +256,9 @@
   }
 }
 
-/* Focus visible for keyboard navigation */
+/* Focus visible for keyboard navigation - Simple */
 .focus-visible:focus {
-  @apply outline-none ring-2 ring-sky-400 ring-offset-2;
+  @apply outline-none ring-2 ring-white/50 ring-offset-2 ring-offset-black;
 }
 
 /* Print styles */
