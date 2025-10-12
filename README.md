@@ -241,55 +241,14 @@ Common issues and solutions:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-4. Deploy automatically
 
-### Manual Deployment
-```bash
-npm run build
-npm run start
-```
+## Links
 
-## 🧪 Testing
-
-### Development Testing
-1. Connect a Solana wallet with Devnet SOL
-2. Browse the marketplace
-3. Create a test sale
-4. Purchase tokens
-5. Check portfolio
-
-### Wallet Setup
-1. Install Phantom or Solflare wallet
-2. Switch to Devnet
-3. Get Devnet SOL from faucet
-4. Connect to the application
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Solana Foundation** for the blockchain infrastructure
-- **Next.js Team** for the amazing React framework
-- **Tailwind CSS** for the utility-first CSS framework
-- **Vercel** for hosting and deployment platform
-
-## 🔗 Links
-
+- [Live Demo](https://your-netlify-url.netlify.app) *(coming soon)*
 - [Solana Documentation](https://docs.solana.com/)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Anchor Framework](https://anchor-lang.com/)
 
 ---
 
-Built with ❤️ for the Solana ecosystem 🌄
+Built with ❤️ for the Solana ecosystem
